@@ -3,6 +3,7 @@
  */
 //require("@nomiclabs/hardhat-truffle5");
 require("solidity-coverage");
+require("@nomiclabs/hardhat-ethers")
 
 module.exports = {
   solidity: {
