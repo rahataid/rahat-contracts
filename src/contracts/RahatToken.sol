@@ -8,40 +8,46 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "../interfaces/IRahatToken.sol";
 import "./AbstractOwner.sol";
 
-contract RahatToken is AbstractOwner, ERC20, ERC20Snapshot, ERC20Burnable, IRahatToken {
-  uint8 private decimalPoints;
-  constructor(
-    string memory _name,
-    string memory _symbol,
-    address _admin,
-    uint8 _decimals
-  ) ERC20(_name, _symbol) {
-    isOwner[_admin] = true;
-    decimalPoints = _decimals;
-  }
+contract RahatToken is
+    AbstractOwner,
+    ERC20,
+    ERC20Snapshot,
+    ERC20Burnable,
+    IRahatToken
+{
+    uint8 private decimalPoints;
 
-  ///@dev returns the decimals of the tokens
-  function decimals() public view override returns(uint8){
-    return decimalPoints;
-  }
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _admin,
+        uint8 _decimals
+    ) ERC20(_name, _symbol) {
+        isOwner[_admin] = true;
+        decimalPoints = _decimals;
+    }
 
-  ///@dev Mint x amount of ERC20 token to given address
-  ///@param _address Address to which ERC20 token will be minted
-  ///@param _amount Amount of token to be minted
-  function mint(address _address, uint256 _amount)
-    public
-    OnlyOwner
-    returns (uint256)
-  {
-    _mint(_address, _amount);
-    return _amount;
-  }
+    ///@dev returns the decimals of the tokens
+    function decimals() public view override returns (uint8) {
+        return decimalPoints;
+    }
 
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal override(ERC20, ERC20Snapshot) {
-    super._beforeTokenTransfer(from, to, amount);
-  }
+    ///@dev Mint x amount of ERC20 token to given address
+    ///@param _address Address to which ERC20 token will be minted
+    ///@param _amount Amount of token to be minted
+    function mint(
+        address _address,
+        uint256 _amount
+    ) public OnlyOwner returns (uint256) {
+        _mint(_address, _amount);
+        return _amount;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20, ERC20Snapshot) {
+        super._beforeTokenTransfer(from, to, amount);
+    }
 }
