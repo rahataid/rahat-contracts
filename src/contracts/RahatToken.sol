@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 import "../interfaces/IRahatToken.sol";
-import "./AbstractOwner.sol";
+import "../libraries/AbstractOwner.sol";
 
 contract RahatToken is
     AbstractOwner,
@@ -23,7 +23,7 @@ contract RahatToken is
         address _admin,
         uint8 _decimals
     ) ERC20(_name, _symbol) {
-        isOwner[_admin] = true;
+        _addOwner(_admin);
         decimalPoints = _decimals;
     }
 

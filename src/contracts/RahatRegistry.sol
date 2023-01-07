@@ -2,28 +2,29 @@
 
 pragma solidity ^0.8.16;
 
-import "./AbstractOwner.sol";
+import "../libraries/AbstractOwner.sol";
 
 /// @title Donor contract to create tokens
 /// @author Rumsan Associates
 /// @notice You can use this contract to manage Rahat tokens and projects
 /// @dev All function calls are only executed by contract owner
 contract RahatRegistry is AbstractOwner {
-    mapping(bytes32 => address) public id2Address;
 
-    constructor(address _admin) {
-        isOwner[_admin] = true;
-    }
+  mapping(bytes32=>address) public id2Address;
 
-    function addId2AddressMap(
-        bytes32 _id,
-        address _addr
-    ) public OnlyOwner returns (bool) {
-        id2Address[_id] = _addr;
-        return true;
-    }
+  constructor(
+    address _admin
+  ) {
+    addOwner(_admin);
+  }
 
-    function exists(bytes32 _id) public view returns (bool) {
-        return id2Address[_id] != address(0);
-    }
+  function addId2AddressMap(bytes32 _id, address _addr) public OnlyOwner returns(bool) {
+    id2Address[_id] = _addr;
+    return true;
+  }
+
+  function exists(bytes32 _id) public view returns(bool){
+    return id2Address[_id]!=address(0);
+  }
 }
+

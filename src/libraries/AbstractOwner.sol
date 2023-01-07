@@ -8,33 +8,37 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 abstract contract AbstractOwner is IOwner, Multicall {
   using EnumerableSet for EnumerableSet.AddressSet;
   EnumerableSet.AddressSet private owners;
-  mapping(address => bool) public isOwner;
+  mapping(address => bool) public owner;
 
   modifier OnlyOwner {
     require(
-      isOwner[msg.sender],
+      owner[msg.sender],
       "Only owner can execute this transaction"
     );
     _;
   }
 
+  function _addOwner(address _account) internal virtual returns(bool) {
+    owner[_account] = true;
+    owners.add(_account);
+    return true;
+  }
+
   /// @notice Add an account to the owner role
   /// @param _account address of new owner
   function addOwner(address _account) public OnlyOwner virtual returns(bool) {
-    isOwner[_account] = true;
-    owners.add(_account);
-    return true;
+    return _addOwner(_account);
   }
 
   /// @notice Remove an account from the owner role
   /// @param _account address of existing owner
   function removeOwner(address _account) public OnlyOwner virtual returns(bool) {
-    isOwner[_account] = false;
+    owner[_account] = false;
     owners.remove(_account);
     return true;
   }
 
-  function listOwners() public view returns(address[] memory){
+  function listAdmins() public view returns(address[] memory){
     return owners.values();
   }
 }

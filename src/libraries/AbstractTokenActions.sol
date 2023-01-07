@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./AbstractOwner.sol";
 
-abstract contract AbstractTokenOwner is AbstractOwner {
+abstract contract AbstractTokenActions is AbstractOwner {
   function transferToken(address _token, address _to, uint256 _amount) public OnlyOwner {
     IERC20(_token).transfer(_to, _amount);
   }
