@@ -1,19 +1,13 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
-contract RahatRequest {
+import "../interfaces/IOtpOracle1.sol";
+
+contract RahatRequest is IOtpOracle1 {
     event RequestCreated(address indexed sender, uint indexed requestId);
     event RequestApproved(uint indexed requestId);
     event RequestResolved(address indexed sender, uint indexed requestId);
-
-    struct Request {
-        address ownerAddress;
-        address otpServerAddress;
-        bytes data;
-        uint expiryDate;
-        bytes32 otpHash;
-        bool isProcessed;
-    }
+    
     mapping(uint => Request) public requests;
     uint public requestCount;
 

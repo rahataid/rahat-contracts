@@ -1,11 +1,12 @@
 pragma solidity 0.8.17;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "../interfaces/IOtpOracle.sol";
+import "../interfaces/IOtpOracle1.sol";
 
 contract TestOracle is ERC20, ERC20Burnable {
     address public deployer;
 
-    IOtpOracle public otpOracle;
+    IOtpOracle1 public otpOracle;
 
     constructor(
         string memory _name,
@@ -13,7 +14,7 @@ contract TestOracle is ERC20, ERC20Burnable {
         address _otpOracle
     ) ERC20(_name, _symbol) {
         deployer = msg.sender;
-        otpOracle = IOtpOracle(_otpOracle);
+        otpOracle = IOtpOracle1(_otpOracle);
     }
 
     function mint(address _account, uint256 _amount) public {
@@ -27,6 +28,6 @@ contract TestOracle is ERC20, ERC20Burnable {
             address(this),
             1000
         );
-        otpOracle.createRequest(address(this), benId, _amount, callBackData);
+        //otpOracle.createRequest(address(this), benId, _amount, callBackData);
     }
 }

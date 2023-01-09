@@ -9,6 +9,7 @@ describe.only("------ Oracle Tests ------", function () {
 
   before(async function () {
     const [deployer, tester] = await ethers.getSigners();
+    console.log(deployer.address, tester.address);
     const OtpOracle = await ethers.getContractFactory("OtpOracle");
     const TestOracle = await ethers.getContractFactory("TestOracle");
 

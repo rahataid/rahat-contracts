@@ -46,12 +46,19 @@ contract RahatClaim is IRahatClaim {
         emit OtpAddedToClaim(_claimId);
     }
 
-    function processClaim(uint _claimId) public returns(Claim memory _claim) {
+    function processClaim(uint _claimId, string memory _otp) public returns(Claim memory _claim) {
         _claim = claims[_claimId];
         require(_claim.ownerAddress==msg.sender, 'not owner');
         require(block.timestamp >= _claim.expiryDate, 'expired');
         require(_claim.isProcessed == false, 'already processed');
+        bytes32 _otpHash = findHash(_otp);
+        require(_claim.otpHash==_otpHash, 'invalid otp');
+        
         _claim.isProcessed = true;
         emit ClaimProcessed(_claimId);
+    }
+
+    function findHash(string memory _data) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_data));
     }
 }

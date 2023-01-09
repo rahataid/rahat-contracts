@@ -29,5 +29,5 @@ interface IRahatClaim {
         uint256 _expiryDate
     ) external;
 
-    function processClaim(uint _claimId) external returns(Claim memory _claim);
+    function processClaim(uint _claimId, string memory _otp) external returns(Claim memory _claim);
 }
