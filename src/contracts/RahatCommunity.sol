@@ -55,6 +55,20 @@ contract RahatCommunity is AccessControl {
         RahatRegistry = _rahatRegistry;
     }
 
+
+    //***** Admin function *********//
+    function updateClaimContractAddress(address _address) public OnlyAdmin {
+        RahatClaim = IRahatClaim(_address);
+    }
+
+    function updateRegistryContractAddress(address _address) public OnlyAdmin {
+        RahatRegistry = IRahatRegistry(_address);
+    }
+
+    function updateOtpServerAddress(address _address) public OnlyAdmin {
+        otpServerAddress = _address;
+    }
+
     //***** Project functions *********//
     function approveProject(address _address) public OnlyAdmin {
         isApprovedProject[_address] = true;
@@ -92,9 +106,23 @@ contract RahatCommunity is AccessControl {
         address _tokenAddress, 
         uint _amount
     ) public OnlyVendor returns(uint requestId) {
+        requestId = requestTokenFromBeneficiary(
+            _benAddress,
+            _tokenAddress, 
+            _amount,
+            otpServerAddress
+        );
+    }
+
+    function requestTokenFromBeneficiary(
+        address _benAddress,
+        address _tokenAddress, 
+        uint _amount,
+        address _otpServerAddress
+    ) public OnlyVendor returns(uint requestId) {
         require(otpServerAddress!=address(0));
         require(claims[_benAddress][_tokenAddress]>=_amount, 'not enough balace');
-        requestId = RahatClaim.createClaim(msg.sender, _benAddress, otpServerAddress, _tokenAddress, _amount);
+        requestId = RahatClaim.createClaim(msg.sender, _benAddress, _otpServerAddress, _tokenAddress, _amount);
         tokenRequestIds[msg.sender][_benAddress] = requestId;
     }
 
