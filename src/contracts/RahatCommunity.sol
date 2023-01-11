@@ -7,8 +7,8 @@ import "../interfaces/IRahatRegistry.sol";
 import "../interfaces/IRahatToken.sol";
 
 contract RahatCommunity is AccessControl {
-
     //***** Variables *********//
+    string public name;
     IRahatClaim public RahatClaim;
     IRahatRegistry public RahatRegistry;
     IRahatToken public RahatToken;
@@ -43,6 +43,7 @@ contract RahatCommunity is AccessControl {
 
     //***** Constructor *********//
     constructor(
+        string _name,
         IRahatClaim _rahatClaim,
         IRahatRegistry _rahatRegistry,
         address _otpServerAddress,
@@ -50,6 +51,7 @@ contract RahatCommunity is AccessControl {
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
+        name = _name;
         otpServerAddress = _otpServerAddress;
         RahatClaim = _rahatClaim;
         RahatRegistry = _rahatRegistry;
