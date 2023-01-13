@@ -11,20 +11,26 @@ interface ICVAProject is IRahatProject {
         address _token,
         address _from,
         uint256 _amount
-    ) external returns (bool);
+    ) external;
 
     ///@dev Assign Token to beneficiary
     function addClaimToBeneficiary(address _address, uint _amount) external;
 
     ///@dev withdraw claims of beneficiary by beneficary
-    function withdrawClaims(address _to, uint _amount) external;
+    function withdrawClaims(address _to, uint256 _amount) external;
 
     //***** Claim functions *********//
     ///@dev Request For tokens From Beneficay by vendor
     function requestTokenFromBeneficiary(
         address _benAddress,
-        address _tokenAddress,
         uint _amount
+    ) external returns (uint requestId);
+
+    function requestTokenFromBeneficiary(
+        address _benAddress,
+        address _tokenAddress,
+        uint _amount,
+        address _otpServerAddress
     ) external returns (uint requestId);
 
     ///@dev Process token request to beneficiary by otp verfication

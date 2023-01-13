@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "contract:compile": "hardhat compile",
+    "compile": "hardhat compile",
     "contract:coverage": "hardhat coverage",
     "contract:test": "hardhat test",
     "contract:test-oracle": "hardhat test ./tests/testOracle.test.js"

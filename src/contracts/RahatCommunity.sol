@@ -15,10 +15,7 @@ contract RahatCommunity is AccessControl {
 
     address public otpServerAddress;
     mapping(address => bool) isBeneficiary;
-    mapping(address => bool) isApprovedProject;
-    mapping(address => mapping(address => uint)) claims; //benAddress=>tokenAddress=>amount;
-    mapping(address => mapping(address => uint)) tokenRequestIds; //vendorAddress=>benAddress=>requestId;
-    address[] public tokenAddresses;
+    address[] public projects;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant VENDOR_ROLE = keccak256("VENDOR");
@@ -64,12 +61,8 @@ contract RahatCommunity is AccessControl {
     }
 
     //***** Project functions *********//
-    function approveProject(address _address) public OnlyAdmin {
-        isApprovedProject[_address] = true;
-    }
-
-    function revokeProject(address _address) public OnlyAdmin {
-        isApprovedProject[_address] = false;
+    function addProject(address _address) public OnlyAdmin {
+        projects.push(_address);
     }
 
     //***** Beneficiary functions *********//
@@ -86,75 +79,10 @@ contract RahatCommunity is AccessControl {
         isBeneficiary[_addr] = true;
     }
 
-    function addClaimToBeneficiary(
-        address _address,
-        address _tokenAddress,
-        uint _amount
-    ) public {
-        require(isApprovedProject[msg.sender], "project not approved");
-        require(isBeneficiary[_address], "not beneficiary");
-        if (!_tokenExists(_tokenAddress)) tokenAddresses.push(_tokenAddress);
-
-        claims[_address][_tokenAddress] = _amount;
-    }
-
-    //***** Claim functions *********//
-    function requestTokenFromBeneficiary(
-        address _benAddress,
-        address _tokenAddress,
-        uint _amount
-    ) public OnlyVendor returns (uint requestId) {
-        requestId = requestTokenFromBeneficiary(
-            _benAddress,
-            _tokenAddress,
-            _amount,
-            otpServerAddress
-        );
-    }
-
-    function requestTokenFromBeneficiary(
-        address _benAddress,
-        address _tokenAddress,
-        uint _amount,
-        address _otpServerAddress
-    ) public OnlyVendor returns (uint requestId) {
-        require(otpServerAddress != address(0));
-        require(
-            claims[_benAddress][_tokenAddress] >= _amount,
-            "not enough balace"
-        );
-        requestId = RahatClaim.createClaim(
-            msg.sender,
-            _benAddress,
-            _otpServerAddress,
-            _tokenAddress,
-            _amount
-        );
-        tokenRequestIds[msg.sender][_benAddress] = requestId;
-    }
-
-    function processTokenRequest(
-        address _benAddress,
-        string memory _otp
-    ) public {
-        IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
-            tokenRequestIds[msg.sender][_benAddress],
-            _otp
-        );
-        uint _benTokenBalance = claims[_claim.claimeeAddress][
-            _claim.tokenAddress
-        ];
-        require(_benTokenBalance >= _claim.amount, "not enough balace");
-        IRahatToken _token = IRahatToken(_claim.tokenAddress);
-        _benTokenBalance -= _claim.amount;
-
-        _token.transfer(_claim.claimerAddress, _claim.amount);
-    }
-
     //***** Util functions *********//
-    function _tokenExists(address _tokenAddress) private view returns (bool) {
-        for (uint i = 0; i < tokenAddresses.length; i++) {
-            if (tokenAddresses[i] == _tokenAddress) {
+    function _projectExists(address _tokenAddress) private view returns (bool) {
+        for (uint i = 0; i < projects.length; i++) {
+            if (projects[i] == _tokenAddress) {
                 return true;
             }
         }
