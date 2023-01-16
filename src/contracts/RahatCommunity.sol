@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IRahatClaim.sol";
 import "../interfaces/IRahatRegistry.sol";
 import "../interfaces/IRahatToken.sol";
+import "../interfaces/IRahatProject.sol";
 
 contract RahatCommunity is AccessControl {
     //***** Variables *********//
@@ -14,7 +15,7 @@ contract RahatCommunity is AccessControl {
     IRahatToken public RahatToken;
 
     address public otpServerAddress;
-    mapping(address => bool) isBeneficiary;
+    mapping(address => bool) public isBeneficiary;
     address[] public projects;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
@@ -77,6 +78,14 @@ contract RahatCommunity is AccessControl {
     function addBeneficiaryById(bytes32 _id) public OnlyAdmin {
         address _addr = RahatRegistry.id2Address(_id);
         isBeneficiary[_addr] = true;
+    }
+
+    function assignBeneficiaryToProject(
+        address _projectAddress,
+        address _account
+    ) public OnlyAdmin {
+        require(isBeneficiary[_account], "not beneficiary");
+        IRahatProject(_projectAddress).addBeneficiary(_account);
     }
 
     //***** Util functions *********//

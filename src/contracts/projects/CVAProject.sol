@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./ICVAProject.sol";
 import "../../libraries/AbstractTokenActions.sol";
 import "../../interfaces/IRahatClaim.sol";
@@ -11,13 +12,15 @@ import "../../interfaces/IRahatCommunity.sol";
 //mapping(address=>mapping(address=>uint256)) public claims;
 
 contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
+    using EnumerableSet for EnumerableSet.AddressSet;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant VENDOR_ROLE = keccak256("VENDOR");
     bytes32 public constant DONOR_ROLE = keccak256("DONOR");
     bytes32 public constant COMMUNITY_ROLE = keccak256("COMMUNITY");
 
+    string private _name = "CVA Project";
+    address public community;
     address private _defaultToken;
-    string private _name;
     bool private _isActive;
     IRahatClaim public RahatClaim;
     IRahatRegistry public RahatRegistry;
@@ -26,8 +29,9 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
     address public otpServerAddress;
 
     uint256 private _beneficiaryCount;
+    EnumerableSet.AddressSet private beneficiaries;
+    mapping(address => bool) private _isBeneficiary;
     mapping(address => uint256) public tokensReceived;
-    mapping(address => bool) public isBeneficiary;
     mapping(address => mapping(address => uint)) claims; //benAddress=>tokenAddress=>amount;
     mapping(address => mapping(address => uint)) tokenRequestIds; //vendorAddress=>benAddress=>requestId;
 
@@ -49,9 +53,11 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
     ) {
         _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        _setupRole(COMMUNITY_ROLE, _community);
         _defaultToken = defaultToken_;
         RahatClaim = IRahatClaim(_rahatClaim);
         otpServerAddress = _otpServerAddress;
+        community = _community;
     }
 
     function name() public view returns (string memory) {
@@ -70,18 +76,27 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
         return _beneficiaryCount;
     }
 
+    function isBeneficiary(address _account) public view returns (bool) {
+        return _isBeneficiary[_account];
+    }
+
     function acceptToken(
         address _token,
         address _from,
         uint256 _amount
     ) public {
-        claimToken(_token, _from, _amount);
+        _claimToken(_token, _from, _amount);
         _setupRole(DONOR_ROLE, _from);
         tokensReceived[_token] += _amount;
     }
 
+    function addBeneficiary(address _account) public onlyCommunityManager {
+        _isBeneficiary[_account] = true;
+        beneficiaries.add(_account);
+    }
+
     function addClaimToBeneficiary(address _address, uint _amount) public {
-        require(isBeneficiary[_address], "not beneficiary");
+        require(_isBeneficiary[_address], "not beneficiary");
         claims[_address][_defaultToken] = _amount;
     }
 
@@ -141,7 +156,7 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
     }
 
     function withdrawClaims(address _to, uint256 _amount) public {
-        require(isBeneficiary[msg.sender], "not a ben");
+        require(_isBeneficiary[msg.sender], "not a ben");
         require(
             claims[msg.sender][_defaultToken] >= _amount,
             "not enough token"

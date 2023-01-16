@@ -10,22 +10,21 @@ import "../interfaces/IRahatRegistry.sol";
 /// @notice You can use this contract to manage Rahat tokens and projects
 /// @dev All function calls are only executed by contract owner
 contract RahatRegistry is AbstractOwner, IRahatRegistry {
+    mapping(bytes32 => address) public override id2Address;
 
-  mapping(bytes32=>address) public override id2Address;
+    constructor(address _admin) {
+        _addOwner(_admin);
+    }
 
-  constructor(
-    address _admin
-  ) {
-    addOwner(_admin);
-  }
+    function addId2AddressMap(
+        bytes32 _id,
+        address _address
+    ) public override OnlyOwner returns (bool) {
+        id2Address[_id] = _address;
+        return true;
+    }
 
-  function addId2AddressMap(bytes32 _id, address _address) public override OnlyOwner returns(bool) {
-    id2Address[_id] = _address;
-    return true;
-  }
-
-  function exists(bytes32 _id) public override view returns(bool){
-    return id2Address[_id]!=address(0);
-  }
+    function exists(bytes32 _id) public view override returns (bool) {
+        return id2Address[_id] != address(0);
+    }
 }
-

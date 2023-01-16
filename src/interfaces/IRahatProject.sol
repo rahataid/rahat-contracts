@@ -10,5 +10,9 @@ interface IRahatProject {
 
     function beneficiaryCount() external view returns (uint);
 
+    function addBeneficiary(address _account) external;
+
+    function isBeneficiary(address _account) external view returns (bool);
+
     //function acceptToken(address _tokenAddress) external;
 }
