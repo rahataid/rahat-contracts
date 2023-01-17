@@ -6,13 +6,11 @@ interface IRahatProject {
 
     function defaultToken() external view returns (address);
 
-    function isActive() external view returns (bool);
-
-    function beneficiaryCount() external view returns (uint);
+    function isLocked() external view returns (bool);
 
     function addBeneficiary(address _account) external;
 
-    function isBeneficiary(address _account) external view returns (bool);
+    // function isBeneficiary(address _account) external view returns (bool);
 
     //function acceptToken(address _tokenAddress) external;
 }
