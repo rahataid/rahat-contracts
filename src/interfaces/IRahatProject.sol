@@ -2,8 +2,17 @@
 pragma solidity ^0.8.17;
 
 interface IRahatProject {
-   function name() external view returns(string memory);
-   function defaultToken() external view returns(address);
-   function isActive() external view returns(bool);
-   function beneficiaryCount() external view returns(uint);
+    function name() external view returns (string memory);
+
+    function defaultToken() external view returns (address);
+
+    function isActive() external view returns (bool);
+
+    function beneficiaryCount() external view returns (uint);
+
+    function addBeneficiary(address _account) external;
+
+    function isBeneficiary(address _account) external view returns (bool);
+
+    //function acceptToken(address _tokenAddress) external;
 }
