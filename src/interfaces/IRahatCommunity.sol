@@ -28,6 +28,7 @@ interface IRahatCommunity is IAccessControl {
         address _beneficiary
     ) external;
 
-    function isAdmin(address _address) external pure returns (bool);
-    function isVendor(address _address) external pure returns (bool);
+    function isAdmin(address _address) external view returns (bool);
+
+    function isVendor(address _address) external view returns (bool);
 }

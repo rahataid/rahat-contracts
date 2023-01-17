@@ -47,11 +47,11 @@ contract RahatCommunity is AccessControl {
         RahatRegistry = _rahatRegistry;
     }
 
-    function isAdmin(address _address) public pure returns (bool) {
+    function isAdmin(address _address) public view returns (bool) {
         return hasRole(DEFAULT_ADMIN_ROLE, _address);
     }
 
-    function isVendor() public pure returns (bool) {
+    function isVendor(address _address) public view returns (bool) {
         return hasRole(VENDOR_ROLE, _address);
     }
 
