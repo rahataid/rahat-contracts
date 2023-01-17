@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IRahatClaim.sol";
 import "../interfaces/IRahatProject.sol";
+import "../interfaces/IRahatCommunity.sol";
 
-contract RahatCommunity is AccessControl {
+contract RahatCommunity is IRahatCommunity, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     //***** Variables *********//
     string public name;
@@ -28,10 +29,7 @@ contract RahatCommunity is AccessControl {
     }
 
     //***** Constructor *********//
-    constructor(
-        string memory _name,
-        address _admin
-    ) {
+    constructor(string memory _name, address _admin) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
         name = _name;
@@ -57,7 +55,6 @@ contract RahatCommunity is AccessControl {
     function addVendor(address _address) public OnlyAdmin {
         _setupRole(VENDOR_ROLE, _address);
     }
-
 
     //***** Project functions *********//
     function projectCount() public view returns (uint256) {
