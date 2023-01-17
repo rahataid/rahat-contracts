@@ -32,8 +32,8 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
     EnumerableSet.AddressSet private beneficiaries;
     mapping(address => bool) private _isBeneficiary;
     mapping(address => uint256) public tokensReceived;
-    mapping(address => mapping(address => uint)) claims; //benAddress=>tokenAddress=>amount;
-    mapping(address => mapping(address => uint)) tokenRequestIds; //vendorAddress=>benAddress=>requestId;
+    mapping(address => mapping(address => uint)) public claims; //benAddress=>tokenAddress=>amount;
+    mapping(address => mapping(address => uint)) public tokenRequestIds; //vendorAddress=>benAddress=>requestId;
 
     modifier onlyCommunityManager() {
         require(hasRole(COMMUNITY_ROLE, msg.sender), "not a community");
@@ -56,6 +56,7 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
         _setupRole(COMMUNITY_ROLE, _community);
         _defaultToken = defaultToken_;
         RahatClaim = IRahatClaim(_rahatClaim);
+        RahatCommunity = IRahatCommunity(_community);
         otpServerAddress = _otpServerAddress;
         community = _community;
     }
@@ -98,6 +99,14 @@ contract CVAProject is ICVAProject, AbstractTokenActions, AccessControl {
     function addClaimToBeneficiary(address _address, uint _amount) public {
         require(_isBeneficiary[_address], "not beneficiary");
         claims[_address][_defaultToken] = _amount;
+    }
+
+    function sendTokenToVendor(address _address, uint256 _amount) public {
+        require(
+            RahatCommunity.hasRole(RahatCommunity.vendorRole(), _address),
+            "Not a Vendor"
+        );
+        _approveToken(_defaultToken, _address, _amount);
     }
 
     //***** Claim functions *********//

@@ -18,8 +18,8 @@ contract RahatCommunity is AccessControl {
     mapping(address => bool) public isBeneficiary;
     address[] public projects;
 
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
-    bytes32 public constant VENDOR_ROLE = keccak256("VENDOR");
+    bytes32 private constant ADMIN_ROLE = keccak256("ADMIN");
+    bytes32 private constant VENDOR_ROLE = keccak256("VENDOR");
 
     //***** Modifiers *********//
     modifier OnlyAdmin() {
@@ -46,6 +46,14 @@ contract RahatCommunity is AccessControl {
         otpServerAddress = _otpServerAddress;
         RahatClaim = _rahatClaim;
         RahatRegistry = _rahatRegistry;
+    }
+
+    function vendorRole() public pure returns (bytes32) {
+        return VENDOR_ROLE;
+    }
+
+    function adminRole() public pure returns (bytes32) {
+        return ADMIN_ROLE;
     }
 
     //***** Admin function *********//
@@ -78,6 +86,10 @@ contract RahatCommunity is AccessControl {
     function addBeneficiaryById(bytes32 _id) public OnlyAdmin {
         address _addr = RahatRegistry.id2Address(_id);
         isBeneficiary[_addr] = true;
+    }
+
+    function addVendor(address _address) public OnlyAdmin {
+        _setupRole(VENDOR_ROLE, _address);
     }
 
     function assignBeneficiaryToProject(
