@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
-interface IRahatCommunity {
+import "@openzeppelin/contracts/access/IAccessControl.sol";
+
+interface IRahatCommunity is IAccessControl {
     ///@dev Accept Tokens from Rahatdonor => send to projectContract => give approval to RahatCommunity to spend
     ///@dev Save the received token in a set.
     ///@dev Save the no. of tokens issued to track total tokens received
@@ -25,4 +27,8 @@ interface IRahatCommunity {
         address _project,
         address _beneficiary
     ) external;
+
+    function vendorRole() external pure returns (bytes32);
+
+    function adminRole() external pure returns (bytes32);
 }

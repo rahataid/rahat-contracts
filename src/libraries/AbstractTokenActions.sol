@@ -17,7 +17,15 @@ abstract contract AbstractTokenActions is AbstractOwner {
         address _token,
         address _spender,
         uint256 _amount
-    ) public OnlyOwner {
+    ) private {
+        IERC20(_token).approve(_spender, _amount);
+    }
+
+    function _approveToken(
+        address _token,
+        address _spender,
+        uint256 _amount
+    ) public {
         IERC20(_token).approve(_spender, _amount);
     }
 
