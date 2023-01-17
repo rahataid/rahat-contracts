@@ -2,21 +2,17 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IRahatClaim.sol";
-import "../interfaces/IRahatRegistry.sol";
-import "../interfaces/IRahatToken.sol";
 import "../interfaces/IRahatProject.sol";
 
 contract RahatCommunity is AccessControl {
+    using EnumerableSet for EnumerableSet.AddressSet;
     //***** Variables *********//
     string public name;
-    IRahatClaim public RahatClaim;
-    IRahatRegistry public RahatRegistry;
-    IRahatToken public RahatToken;
 
-    address public otpServerAddress;
-    mapping(address => bool) public isBeneficiary;
-    address[] public projects;
+    mapping(address => bool) public override isBeneficiary;
+    EnumerableSet.AddressSet private projects;
 
     bytes32 private constant VENDOR_ROLE = keccak256("VENDOR");
 
@@ -34,17 +30,11 @@ contract RahatCommunity is AccessControl {
     //***** Constructor *********//
     constructor(
         string memory _name,
-        IRahatClaim _rahatClaim,
-        IRahatRegistry _rahatRegistry,
-        address _otpServerAddress,
         address _admin
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
         name = _name;
-        otpServerAddress = _otpServerAddress;
-        RahatClaim = _rahatClaim;
-        RahatRegistry = _rahatRegistry;
     }
 
     function isAdmin(address _address) public view returns (bool) {
@@ -53,24 +43,6 @@ contract RahatCommunity is AccessControl {
 
     function isVendor(address _address) public view returns (bool) {
         return hasRole(VENDOR_ROLE, _address);
-    }
-
-    //***** Admin function *********//
-    function updateClaimContractAddress(address _address) public OnlyAdmin {
-        RahatClaim = IRahatClaim(_address);
-    }
-
-    function updateRegistryContractAddress(address _address) public OnlyAdmin {
-        RahatRegistry = IRahatRegistry(_address);
-    }
-
-    function updateOtpServerAddress(address _address) public OnlyAdmin {
-        otpServerAddress = _address;
-    }
-
-    //***** Project functions *********//
-    function addProject(address _address) public OnlyAdmin {
-        projects.push(_address);
     }
 
     //***** Beneficiary functions *********//
@@ -82,30 +54,38 @@ contract RahatCommunity is AccessControl {
         isBeneficiary[_address] = false;
     }
 
-    function addBeneficiaryById(bytes32 _id) public OnlyAdmin {
-        address _addr = RahatRegistry.id2Address(_id);
-        isBeneficiary[_addr] = true;
-    }
-
     function addVendor(address _address) public OnlyAdmin {
         _setupRole(VENDOR_ROLE, _address);
     }
 
-    function assignBeneficiaryToProject(
-        address _projectAddress,
-        address _account
-    ) public OnlyAdmin {
-        require(isBeneficiary[_account], "not beneficiary");
-        IRahatProject(_projectAddress).addBeneficiary(_account);
+
+    //***** Project functions *********//
+    function projectCount() public view returns (uint256) {
+        return projects.length();
     }
 
-    //***** Util functions *********//
-    function _projectExists(address _tokenAddress) private view returns (bool) {
-        for (uint i = 0; i < projects.length; i++) {
-            if (projects[i] == _tokenAddress) {
-                return true;
-            }
+    function projectExists(address _projectAddress) public view returns (bool) {
+        return projects.contains(_projectAddress);
+    }
+
+    function addProject(address _projectAddress) public OnlyAdmin {
+        projects.add(_projectAddress);
+    }
+
+    function removeProject(address _projectAddress) public OnlyAdmin {
+        projects.remove(_projectAddress);
+    }
+
+    function requestToAddProject(address _projectAddress) public {
+        emit ProjectRequested(tx.origin, _projectAddress);
+    }
+
+    function listProjects(
+        uint start,
+        uint limit
+    ) public view returns (address[] memory _addresses) {
+        for (uint i = 0; i < limit; i++) {
+            _addresses[i] = (projects.at(start + i));
         }
-        return false;
     }
 }

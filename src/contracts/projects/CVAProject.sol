@@ -58,10 +58,12 @@ contract CVAProject is ICVAProject {
         RahatClaim = IRahatClaim(_rahatClaim);
         RahatCommunity = IRahatCommunity(_community);
         otpServerAddress = _otpServerAddress;
+        RahatCommunity.requestToAddProject(address(this));
     }
 
     function lockProject(uint _amount) public onlyUnlocked {
         require(isDonor[msg.sender], "not a donor");
+        require(tokensReceived > 0, "no tokens");
         require(beneficiaries.length() > 0, "no beneficiary");
         _assignClaims(_amount);
         isLocked = true;
@@ -79,15 +81,16 @@ contract CVAProject is ICVAProject {
     }
 
     function addBeneficiary(
-        address _account
+        address _address
     ) public onlyUnlocked onlyCommunityAdmin {
-        beneficiaries.add(_account);
+        require(RahatCommunity.isBeneficiary(_address), 'not valid ben');
+        beneficiaries.add(_address);
     }
 
     function removeBeneficiary(
-        address _account
+        address _address
     ) public onlyUnlocked onlyCommunityAdmin {
-        beneficiaries.remove(_account);
+        beneficiaries.remove(_address);
     }
 
     function listBeneficiaries(
@@ -116,6 +119,9 @@ contract CVAProject is ICVAProject {
         address _from,
         uint256 _amount
     ) public onlyUnlocked onlyCommunityAdmin {
+        //event community project list;
+        require(RahatCommunity.projectExists(address(this)), 'project not approved');
+
         IERC20(defaultToken).transferFrom(_from, address(this), _amount);
         tokensReceived += _amount;
     }
@@ -210,5 +216,9 @@ contract CVAProject is ICVAProject {
             _claim.claimerAddress,
             _claim.amount
         );
+    }
+
+    function updateOtpServerAddress(address _address) public onlyCommunityAdmin {
+        otpServerAddress = _address;
     }
 }
