@@ -9,7 +9,7 @@ abstract contract AbstractTokenActions is AbstractOwner {
         address _token,
         address _to,
         uint256 _amount
-    ) public OnlyOwner {
+    ) public virtual OnlyOwner {
         IERC20(_token).transfer(_to, _amount);
     }
 
@@ -17,15 +17,7 @@ abstract contract AbstractTokenActions is AbstractOwner {
         address _token,
         address _spender,
         uint256 _amount
-    ) private {
-        IERC20(_token).approve(_spender, _amount);
-    }
-
-    function _approveToken(
-        address _token,
-        address _spender,
-        uint256 _amount
-    ) public {
+    ) public virtual OnlyOwner {
         IERC20(_token).approve(_spender, _amount);
     }
 
@@ -37,20 +29,12 @@ abstract contract AbstractTokenActions is AbstractOwner {
         IERC20(_token).transferFrom(_from, address(this), _amount);
     }
 
-    function _claimToken(
-        address _token,
-        address _from,
-        uint256 _amount
-    ) public virtual {
-        IERC20(_token).transferFrom(_from, address(this), _amount);
-    }
-
     function transferFromToken(
         address _token,
         address _from,
         address _to,
         uint256 _amount
-    ) public OnlyOwner {
+    ) public virtual OnlyOwner {
         IERC20(_token).transferFrom(_from, _to, _amount);
     }
 

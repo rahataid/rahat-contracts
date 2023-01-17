@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 abstract contract AbstractOwner is IOwner, Multicall {
   using EnumerableSet for EnumerableSet.AddressSet;
   EnumerableSet.AddressSet private owners;
-  mapping(address => bool) public owner;
+  mapping(address => bool) private owner;
 
   modifier OnlyOwner {
     require(

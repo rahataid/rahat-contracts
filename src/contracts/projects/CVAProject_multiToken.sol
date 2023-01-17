@@ -7,13 +7,14 @@ import "./ICVAProject.sol";
 import "../../interfaces/IRahatClaim.sol";
 import "../../interfaces/IRahatCommunity.sol";
 
+//mapping(address=>mapping(address=>uint256)) public claims;
+
 contract CVAProject is ICVAProject {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     string public override name;
     address public override defaultToken;
     bool public override isLocked;
-    bool private _isClaimed;
     
     IRahatClaim public RahatClaim;
     IRahatCommunity public RahatCommunity;
@@ -22,13 +23,8 @@ contract CVAProject is ICVAProject {
     EnumerableSet.AddressSet private beneficiaries;
     mapping(address => bool) public isDonor;
 
-    uint public tokensReceived;
-    mapping(address => uint) public claims; //benAddress=>amount;
-
-    uint public totalVendorAllocation;
-    mapping(address => uint) public vendorAllowance;
-    mapping(address => uint) public vendorAllowancePending;
-
+    mapping(address => uint256) public tokensReceived;
+    mapping(address => mapping(address => uint)) public claims; //benAddress=>tokenAddress=>amount;
     mapping(address => mapping(address => uint)) public tokenRequestIds; //vendorAddress=>benAddress=>requestId;
 
     modifier onlyCommunityAdmin() {
@@ -60,17 +56,9 @@ contract CVAProject is ICVAProject {
         otpServerAddress = _otpServerAddress;
     }
 
-    function lockProject(uint _amount) public onlyUnlocked {
+    function lockProject() public {
         require(isDonor(msg.sender), 'not a donor');
         require(beneficiaries.length()>0, 'no beneficiary');
-        _assignClaims(_amount)
-        isLocked = true;
-    }
-
-    function unlockProject(uint _amount) public onlyLocked {
-        require(isDonor(msg.sender), 'not a donor');
-        require(!_isClaimed, 'claim already started');
-        isLocked = false;
     }
 
     //***** Beneficiary functions *********//
@@ -97,7 +85,7 @@ contract CVAProject is ICVAProject {
         require(IERC20(defaultToken).balanceOf(address(this)) >= requiredBudget, 'not enough tokens');
         
         for(uint i=0;i<beneficiaries.length();i++){
-            claims[beneficiaries.at(i)] = _amount;
+            claims[beneficiaries.at(i)][defaultToken] = _amount;
         }
     }
 
@@ -105,43 +93,31 @@ contract CVAProject is ICVAProject {
     function acceptToken(
         address _from,
         uint256 _amount
-    ) public onlyUnlocked onlyCommunityAdmin {
+    ) public onlyCommunityAdmin {
+        //require(IERC20(_token).allowance(_from, address(this))>0,'no allowance');
         IERC20(defaultToken).transferFrom(_from, address(this), _amount)
-        tokensReceived += _amount;
+        isLocked=false;
+        tokensReceived[defaultToken] += _amount;
     }
 
     function withdrawSurplusTokens(
         address _token
     ) public onlyCommunityAdmin {
-        uint _surplus = IERC20(_token).balanceOf(address(this));
-        if(_token==defaultToken) _surplus -=  tokensReceived;
+        uint _surplus = IERC20(_token).balanceOf(address(this))-tokensReceived[_token];
         IERC20(_token).transfer(address(RahatCommunity), _surplus)
     }
 
     function addClaimToBeneficiary(address _address, uint _amount) public onlyUnlocked onlyCommunityAdmin {
         require(beneficiaries.contains(_address), "not beneficiary");
-        claims[_address] = _amount;
+        claims[_address][_defaultToken] = _amount;
     }
 
-    function allowanceToVendor(address _address, uint256 _amount) public onlyUnlocked onlyCommunityAdmin {
+    function sendTokenToVendor(address _address, uint256 _amount) public onlyUnlocked onlyCommunityAdmin {
         require(
             RahatCommunity.isVendor(_address),
             "Not a Vendor"
         );
-        require(tokensReceived >=_amount, 'not enough balance')
-        vendorAllowancePending[_address] = _amount;
-    }
-
-    function acceptAllowance(uint256 _amount) public onlyUnlocked onlyCommunityAdmin {
-        require(
-            RahatCommunity.isVendor(_address),
-            "Not a Vendor"
-        );
-        vendorAllowance[_address] += _amount;
-        totalVendorAllocation += _amount;
-        vendorAllowancePending[_address] -= _amount;
-
-        require(tokensReceived >= totalVendorAllocation, 'not enough available allocation');
+        IERC20(_defaultToken).approve(_address, _amount);
     }
 
     //***** Claim functions *********//
@@ -151,6 +127,7 @@ contract CVAProject is ICVAProject {
     ) public onlyLocked returns (uint requestId) {
         requestId = requestTokenFromBeneficiary(
             _benAddress,
+            _defaultToken,
             _amount,
             otpServerAddress
         );
@@ -158,25 +135,20 @@ contract CVAProject is ICVAProject {
 
     function requestTokenFromBeneficiary(
         address _benAddress,
+        address _tokenAddress,
         uint _amount,
         address _otpServerAddress
     ) public onlyLocked returns (uint requestId) {
         require(otpServerAddress != address(0), "invalid otp-server");
         require(
-            claims[_benAddress] >= _amount,
-            "not enough balance"
+            claims[_benAddress][_tokenAddress] >= _amount,
+            "not enough balace"
         );
-        require(
-            vendorAllowance[msg.sender] >= _amount,
-            "not enough vendor allowance"
-        );
-        _isClaimed = true;
- 
         requestId = RahatClaim.createClaim(
             msg.sender,
             _benAddress,
             _otpServerAddress,
-            defaultToken,
+            _tokenAddress,
             _amount
         );
         tokenRequestIds[msg.sender][_benAddress] = requestId;
@@ -190,11 +162,12 @@ contract CVAProject is ICVAProject {
             tokenRequestIds[msg.sender][_benAddress],
             _otp
         );
-        uint _benTokenBalance = claims[_claim.claimeeAddress];
+        uint _benTokenBalance = claims[_claim.claimeeAddress][
+            _claim.tokenAddress
+        ];
         require(_benTokenBalance >= _claim.amount, "not enough balace");
 
         _benTokenBalance -= _claim.amount;
-        vendorAllowance[_claim.claimerAddress] -= _claim.amount;
 
         IERC20(_claim.tokenAddress).transfer(_claim.claimerAddress, _claim.amount)
     }

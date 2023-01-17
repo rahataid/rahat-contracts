@@ -18,7 +18,6 @@ contract RahatCommunity is AccessControl {
     mapping(address => bool) public isBeneficiary;
     address[] public projects;
 
-    bytes32 private constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 private constant VENDOR_ROLE = keccak256("VENDOR");
 
     //***** Modifiers *********//
@@ -48,12 +47,12 @@ contract RahatCommunity is AccessControl {
         RahatRegistry = _rahatRegistry;
     }
 
-    function vendorRole() public pure returns (bytes32) {
-        return VENDOR_ROLE;
+    function isAdmin(address _address) public pure returns (bool) {
+        return hasRole(DEFAULT_ADMIN_ROLE, _address);
     }
 
-    function adminRole() public pure returns (bytes32) {
-        return ADMIN_ROLE;
+    function isVendor() public pure returns (bool) {
+        return hasRole(VENDOR_ROLE, _address);
     }
 
     //***** Admin function *********//
