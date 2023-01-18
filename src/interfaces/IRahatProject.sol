@@ -1,8 +1,9 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-interface IRahatProject {
+interface IRahatProject is IERC165 {
     function name() external view returns (string memory);
 
     function defaultToken() external view returns (address);

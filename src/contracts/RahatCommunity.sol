@@ -9,15 +9,24 @@ import "../interfaces/IRahatCommunity.sol";
 
 contract RahatCommunity is IRahatCommunity, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
-    //***** Variables *********//
+    // #region ***** Events *********//
+        event ProjectRequested(address indexed requestor, address indexed project);
+        event BeneficiaryAdded(address indexed address);
+        event BeneficiaryRemoved(address indexed address);
+        event VendorAdded(address indexed address);
+        event VendorRemoved(address indexed address);
+    // #endregion
+
+    // #region ***** Variables *********//
     string public name;
 
     mapping(address => bool) public override isBeneficiary;
     EnumerableSet.AddressSet private projects;
 
     bytes32 private constant VENDOR_ROLE = keccak256("VENDOR");
-
-    //***** Modifiers *********//
+    // #endregion
+    
+    // #region ***** Modifiers *********//
     modifier OnlyAdmin() {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Not an admin");
         _;
@@ -27,14 +36,15 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
         require(hasRole(VENDOR_ROLE, msg.sender), "Not a vendor");
         _;
     }
-
-    //***** Constructor *********//
+// #endregion
+    
     constructor(string memory _name, address _admin) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
         name = _name;
     }
 
+    // #region ***** Role functions *********//
     function isAdmin(address _address) public view returns (bool) {
         return hasRole(DEFAULT_ADMIN_ROLE, _address);
     }
@@ -43,20 +53,28 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
         return hasRole(VENDOR_ROLE, _address);
     }
 
-    //***** Beneficiary functions *********//
     function addBeneficiary(address _address) public OnlyAdmin {
         isBeneficiary[_address] = true;
+        emit BeneficiaryAdded(_address);
     }
 
     function removeBeneficiary(address _address) public OnlyAdmin {
         isBeneficiary[_address] = false;
+        emit BeneficiaryRemoved(_address);
     }
 
     function addVendor(address _address) public OnlyAdmin {
         _setupRole(VENDOR_ROLE, _address);
+        emit VendorAdded(_address);
     }
 
-    //***** Project functions *********//
+    function removeVendor(address _address) public OnlyAdmin {
+        _revokeRole(VENDOR_ROLE, _address);
+        emit VendorRemoved(_address);
+    }
+    // #endregion
+
+    // #region ***** Project functions *********//
     function projectCount() public view returns (uint256) {
         return projects.length();
     }
@@ -85,4 +103,5 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
             _addresses[i] = (projects.at(start + i));
         }
     }
+    // #endregion
 }
