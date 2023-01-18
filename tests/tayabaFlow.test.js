@@ -15,7 +15,7 @@ describe.only("------ Tayaba Flow ------", function () {
     let otpOracle;
 
     //Tokens
-    let token_1;
+    let token1;
 
     //Accounts
     let deployer;
@@ -44,7 +44,7 @@ describe.only("------ Tayaba Flow ------", function () {
     }
 
     before(async function () {
-        [deployer, admin, manager, vendor1, vendor2, otpServer1, beneficiary1, beneficiary2] = await ethers.getSigners();
+        [deployer, donor, admin, manager, vendor1, vendor2, otpServer1, beneficiary1, beneficiary2] = await ethers.getSigners();
         const RahatDonor = await ethers.getContractFactory("RahatDonor");
         //const RahatRegistry = await ethers.getContractFactory("RahatRegistry");
         const RahatClaim = await ethers.getContractFactory("RahatClaim");
@@ -52,7 +52,7 @@ describe.only("------ Tayaba Flow ------", function () {
 
 
         //common
-        rahatDonor = await RahatDonor.deploy(admin.address);
+        rahatDonor = await RahatDonor.deploy(donor.address);
         //rahatRegistry = await RahatRegistry.deploy(admin.address);
         rahatClaim = await RahatClaim.deploy();
 
@@ -67,21 +67,28 @@ describe.only("------ Tayaba Flow ------", function () {
     describe("Deployment", function () {
         it("Should deploy contract", async function () {
             donorAdmins = await rahatDonor.listAdmins();
-            expect(donorAdmins[0]).to.equal(admin.address);
+            expect(donorAdmins[0]).to.equal(donor.address);
             expect(await rahatCommunity1.name()).to.equal(communityName1);
             console.log("rahatDonor:", rahatDonor.address);
         });
     });
 
     describe("Token Minting", function () {
-        it("Should create token by Rahat Donor", async function () {
-            await rahatDonor.connect(admin).createToken(rahatToken1.name, rahatToken1.symbol, rahatToken1.decimals);
-            const tokens = await rahatDonor.listTokens();
-            tokenAddress = tokens[0];
+        it("Should create token ", async function () {
             const TokenContract = await ethers.getContractFactory("RahatToken");
-            token_1 = await TokenContract.attach(tokenAddress);
-            expect(tokens.length).to.equal(1);
+            token1 = await TokenContract.deploy(
+                rahatToken1.name, rahatToken1.symbol, rahatDonor.address, rahatToken1.decimals
+            );
+            expect(await token1.name()).to.equal(rahatToken1.name);
         })
+        // it("Should create token by Rahat Donor", async function () {
+        //     await rahatDonor.connect(donor).createToken(rahatToken1.name, rahatToken1.symbol, rahatToken1.decimals);
+        //     const tokens = await rahatDonor.listTokens();
+        //     tokenAddress = tokens[0];
+        //     const TokenContract = await ethers.getContractFactory("RahatToken");
+        //     token1 = await TokenContract.attach(tokenAddress);
+        //     expect(tokens.length).to.equal(1);
+        // })
     })
 
 
@@ -90,12 +97,12 @@ describe.only("------ Tayaba Flow ------", function () {
             const CVAProject = await ethers.getContractFactory("CVAProject");
             cvaProject1 = await CVAProject.deploy(
                 cvaProjectDetails1.name,
-                token_1.address,
+                token1.address,
                 rahatClaim.address,
                 otpServer1.address,
                 rahatCommunity1.address
             );
-            expect(await cvaProject1.defaultToken()).to.equal(token_1.address);
+            expect(await cvaProject1.defaultToken()).to.equal(token1.address);
             expect(await cvaProject1.name()).to.equal(cvaProjectDetails1.name);
         })
 
@@ -108,14 +115,14 @@ describe.only("------ Tayaba Flow ------", function () {
 
     describe("Initial Fund Management", function () {
         it("should send fund to project", async function () {
-            await rahatDonor.connect(admin).mintTokenAndApprove(token_1.address, cvaProject1.address, cvaProjectDetails1.approveAmount)
-            const allowanceTocvaProject_1 = await token_1.allowance(rahatDonor.address, cvaProject1.address);
+            await rahatDonor.connect(donor).mintTokenAndApprove(token1.address, cvaProject1.address, cvaProjectDetails1.approveAmount)
+            const allowanceTocvaProject_1 = await token1.allowance(rahatDonor.address, cvaProject1.address);
             expect(allowanceTocvaProject_1.toNumber().toString()).to.equal(cvaProjectDetails1.approveAmount);
         })
 
         it("should accept fund from donor and get the tokens", async function () {
             await cvaProject1.connect(admin).acceptToken(rahatDonor.address, cvaProjectDetails1.approveAmount)
-            const balanceOfProject_1 = await token_1.balanceOf(cvaProject1.address);
+            const balanceOfProject_1 = await token1.balanceOf(cvaProject1.address);
             expect(balanceOfProject_1.toNumber().toString()).to.equal(cvaProjectDetails1.approveAmount)
         })
     })
@@ -163,7 +170,7 @@ describe.only("------ Tayaba Flow ------", function () {
 
         it("should assign token claims to beneficiary1", async function () {
             await cvaProject1.connect(admin).addClaimToBeneficiary(beneficiary1.address, cvaProjectDetails1.beneficiaryClaim1)
-            const beneficiary1_claim = await cvaProject1.claims(beneficiary1.address, token_1.address);
+            const beneficiary1_claim = await cvaProject1.claims(beneficiary1.address, token1.address);
             expect(beneficiary1_claim.toNumber().toString()).to.equal(cvaProjectDetails1.beneficiaryClaim1);
         })
 
