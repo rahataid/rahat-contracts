@@ -154,9 +154,9 @@ describe.only("------ Tayaba Flow ------", function () {
             expect(await rahatCommunity1.isBeneficiary(beneficiary1.address)).to.equal(true)
         })
 
-        it("should assign beneficiary to project", async function () {
+        it("should add beneficiary to project", async function () {
             expect(await cvaProject1.isBeneficiary(beneficiary1.address)).to.equal(false)
-            await rahatCommunity1.connect(admin).assignBeneficiaryToProject(cvaProject1.address, beneficiary1.address);
+            await cvaProject1.connect(admin).addBeneficiary(beneficiary1.address);
             expect(await cvaProject1.isBeneficiary(beneficiary1.address)).to.equal(true)
 
         })

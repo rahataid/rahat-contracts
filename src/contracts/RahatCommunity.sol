@@ -10,11 +10,11 @@ import "../interfaces/IRahatCommunity.sol";
 contract RahatCommunity is IRahatCommunity, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     // #region ***** Events *********//
-        event ProjectRequested(address indexed requestor, address indexed project);
-        event BeneficiaryAdded(address indexed address);
-        event BeneficiaryRemoved(address indexed address);
-        event VendorAdded(address indexed address);
-        event VendorRemoved(address indexed address);
+    event ProjectRequested(address indexed requestor, address indexed project);
+    event BeneficiaryAdded(address indexed _address);
+    event BeneficiaryRemoved(address indexed _address);
+    event VendorAdded(address indexed _address);
+    event VendorRemoved(address indexed _address);
     // #endregion
 
     // #region ***** Variables *********//
@@ -25,7 +25,7 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
 
     bytes32 private constant VENDOR_ROLE = keccak256("VENDOR");
     // #endregion
-    
+
     // #region ***** Modifiers *********//
     modifier OnlyAdmin() {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Not an admin");
@@ -36,8 +36,9 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
         require(hasRole(VENDOR_ROLE, msg.sender), "Not a vendor");
         _;
     }
-// #endregion
-    
+
+    // #endregion
+
     constructor(string memory _name, address _admin) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
@@ -72,6 +73,7 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
         _revokeRole(VENDOR_ROLE, _address);
         emit VendorRemoved(_address);
     }
+
     // #endregion
 
     // #region ***** Project functions *********//

@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-interface IRahatProject is IERC165 {
+interface IRahatProject {
     function name() external view returns (string memory);
 
     function defaultToken() external view returns (address);
