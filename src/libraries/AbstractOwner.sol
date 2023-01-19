@@ -1,44 +1,57 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.17;
 
-import "../interfaces/IOwner.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/Multicall.sol";
+import '../interfaces/IOwner.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import '@openzeppelin/contracts/utils/Multicall.sol';
 
 abstract contract AbstractOwner is IOwner, Multicall {
   using EnumerableSet for EnumerableSet.AddressSet;
-  EnumerableSet.AddressSet private owners;
-  mapping(address => bool) private owner;
 
-  modifier OnlyOwner {
+  // #region ***** Events *********//
+  event OwnerAdded(address indexed);
+  event OwnerRemoved(address indexed);
+  // #endregion
+
+  uint internal maxOwners = 50;
+  EnumerableSet.AddressSet internal owners;
+
+  modifier OnlyOwner() {
     require(
-      owner[msg.sender],
-      "Only owner can execute this transaction"
+      owners.contains(msg.sender),
+      'Only owner can execute this transaction'
     );
     _;
   }
 
-  function _addOwner(address _account) internal virtual returns(bool) {
-    owner[_account] = true;
-    owners.add(_account);
-    return true;
-  }
-
   /// @notice Add an account to the owner role
-  /// @param _account address of new owner
-  function addOwner(address _account) public OnlyOwner virtual returns(bool) {
-    return _addOwner(_account);
+  /// @param _address address of new owner
+  function addOwner(
+    address _address
+  ) public virtual OnlyOwner returns (bool success) {
+    require(owners.length() <= maxOwners, 'owners exceeded');
+    success = owners.add(_address);
+    emit OwnerAdded(_address);
   }
 
   /// @notice Remove an account from the owner role
-  /// @param _account address of existing owner
-  function removeOwner(address _account) public OnlyOwner virtual returns(bool) {
-    owner[_account] = false;
-    owners.remove(_account);
-    return true;
+  /// @param _address address of existing owner
+  function removeOwner(
+    address _address
+  ) public virtual OnlyOwner returns (bool success) {
+    success = owners.remove(_address);
+    emit OwnerRemoved(_address);
   }
 
-  function listAdmins() public view returns(address[] memory){
+  function ownerCount() public view returns (uint) {
+    return owners.length();
+  }
+
+  function isOwner(address _address) public view returns (bool) {
+    return owners.contains(_address);
+  }
+
+  function listOwners() public view returns (address[] memory) {
     return owners.values();
   }
 }

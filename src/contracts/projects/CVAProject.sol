@@ -1,227 +1,210 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./ICVAProject.sol";
-import "../../interfaces/IRahatClaim.sol";
-import "../../interfaces/IRahatCommunity.sol";
+import './ICVAProject.sol';
+import '../../libraries/AbstractProject.sol';
+import '../../interfaces/IRahatClaim.sol';
 
-contract CVAProject is ICVAProject {
-    using EnumerableSet for EnumerableSet.AddressSet;
+contract CVAProject is AbstractProject, ICVAProject {
+  using EnumerableSet for EnumerableSet.AddressSet;
+  // #region ***** Events *********//
+  event ClaimAssigned(address indexed beneficiary, uint amount);
+  event VendorAllowance(address indexed vendor, uint amount);
+  event VendorAllowanceAccept(address indexed vendor, uint amount);
+  event OtpServerUpdated(address indexed);
+  // #endregion
 
-    string public override name;
-    address public override defaultToken;
-    bool public override isLocked;
-    bool private _isClaimed;
+  // #region ***** Variables *********//
+  bytes32 private constant VENDOR_ROLE = keccak256('VENDOR');
+  address public override defaultToken;
 
-    IRahatClaim public RahatClaim;
-    IRahatCommunity public RahatCommunity;
-    address public otpServerAddress;
+  IRahatClaim public RahatClaim;
+  address public override otpServerAddress;
 
-    EnumerableSet.AddressSet private beneficiaries;
-    mapping(address => bool) public isDonor;
+  mapping(address => bool) public override isDonor;
 
-    uint public tokensReceived;
-    mapping(address => uint) public claims; //benAddress=>amount;
+  mapping(address => uint) public override beneficiaryClaims; //benAddress=>amount;
 
-    uint public totalVendorAllocation;
-    mapping(address => uint) public vendorAllowance;
-    mapping(address => uint) public vendorAllowancePending;
+  uint public totalVendorAllocation;
+  mapping(address => uint) public vendorAllowance;
+  mapping(address => uint) public vendorAllowancePending;
 
-    mapping(address => mapping(address => uint)) public tokenRequestIds; //vendorAddress=>benAddress=>requestId;
+  mapping(address => mapping(address => uint)) public tokenRequestIds; //vendorAddress=>benAddress=>requestId;
 
-    modifier onlyCommunityAdmin() {
-        require(RahatCommunity.isAdmin(msg.sender), "not a community admin");
-        _;
+  // #endregion
+
+  // #region ***** Modifiers *********//
+  modifier onlyCommunityAdmin() {
+    require(RahatCommunity.isAdmin(msg.sender), 'not a community admin');
+    _;
+  }
+
+  // #endregion
+
+  constructor(
+    string memory _name,
+    address _defaultToken,
+    address _rahatClaim,
+    address _otpServerAddress,
+    address _community
+  ) AbstractProject(_name, _community) {
+    defaultToken = _defaultToken;
+    RahatClaim = IRahatClaim(_rahatClaim);
+    otpServerAddress = _otpServerAddress;
+    RahatCommunity.requestToAddProject(address(this));
+  }
+
+  // #region ***** Project Functions *********//
+  function lockProject() public onlyUnlocked {
+    require(isDonor[msg.sender], 'not a donor');
+    require(tokenBudget(defaultToken) > 0, 'no tokens');
+    _lockProject();
+  }
+
+  function unlockProject() public onlyLocked {
+    _unlockProject();
+  }
+
+  // #endregion
+
+  // #region ***** Beneficiary Function *********//
+
+  function addBeneficiary(
+    address _address,
+    uint _claimAmount
+  ) public onlyUnlocked onlyCommunityAdmin {
+    require(RahatCommunity.isBeneficiary(_address), 'not valid ben');
+    _addBeneficiary(_address);
+    _assignClaims(_address, _claimAmount);
+  }
+
+  function removeBeneficiary(
+    address _address
+  ) public onlyUnlocked onlyCommunityAdmin {
+    _removeBeneficiary(_address);
+    _assignClaims(_address, 0);
+  }
+
+  function _assignClaims(address _beneficiary, uint _amount) private {
+    require(
+      IERC20(defaultToken).balanceOf(address(this)) >=
+        totalClaimsAssgined() + _amount,
+      'not enough tokens'
+    );
+
+    beneficiaryClaims[_beneficiary] = _amount;
+    emit ClaimAssigned(_beneficiary, _amount);
+  }
+
+  function totalClaimsAssgined() public view returns (uint _totalClaims) {
+    for (uint i = 0; i < _beneficiaries.length(); i++) {
+      _totalClaims += beneficiaryClaims[_beneficiaries.at(i)];
     }
+  }
 
-    modifier onlyUnlocked() {
-        require(!isLocked, "project locked");
-        _;
-    }
+  // #endregion
 
-    modifier onlyLocked() {
-        require(!isLocked, "project unlocked");
-        _;
-    }
+  // #region ***** Token Functions *********//
+  function acceptToken(
+    address _from,
+    uint256 _amount
+  ) public onlyUnlocked onlyCommunityAdmin {
+    _acceptToken(defaultToken, _from, _amount);
+  }
 
-    constructor(
-        string memory _name,
-        address _defaultToken,
-        address _rahatClaim,
-        address _otpServerAddress,
-        address _community
-    ) {
-        name = _name;
-        defaultToken = _defaultToken;
-        RahatClaim = IRahatClaim(_rahatClaim);
-        RahatCommunity = IRahatCommunity(_community);
-        otpServerAddress = _otpServerAddress;
-        RahatCommunity.requestToAddProject(address(this));
-    }
+  function withdrawToken(address _token) public onlyLocked onlyCommunityAdmin {
+    uint _surplus = IERC20(_token).balanceOf(address(this));
+    _withdrawToken(_token, _surplus);
+  }
 
-    function lockProject(uint _amount) public onlyUnlocked {
-        require(isDonor[msg.sender], "not a donor");
-        require(tokensReceived > 0, "no tokens");
-        require(beneficiaries.length() > 0, "no beneficiary");
-        _assignClaims(_amount);
-        isLocked = true;
-    }
+  // #endregion
 
-    function unlockProject() public onlyLocked {
-        require(isDonor[msg.sender], "not a donor");
-        require(!_isClaimed, "claim already started");
-        isLocked = false;
-    }
+  // #region ***** Vendor Allowance *********//
+  function createAllowanceToVendor(
+    address _address,
+    uint256 _amount
+  ) public onlyUnlocked onlyCommunityAdmin {
+    require(RahatCommunity.hasRole(VENDOR_ROLE, _address), 'Not a Vendor');
+    require(tokenBudget(defaultToken) >= _amount, 'not enough balance');
+    vendorAllowancePending[_address] = _amount;
+    emit VendorAllowance(_address, _amount);
+  }
 
-    //***** Beneficiary functions *********//
-    function beneficiaryCount() public view returns (uint256) {
-        return beneficiaries.length();
-    }
+  function acceptAllowanceByVendor(uint256 _amount) public onlyUnlocked {
+    require(RahatCommunity.hasRole(VENDOR_ROLE, msg.sender), 'Not a Vendor');
+    vendorAllowance[msg.sender] += _amount;
+    totalVendorAllocation += _amount;
+    vendorAllowancePending[msg.sender] -= _amount;
 
-    function addBeneficiary(
-        address _address
-    ) public onlyUnlocked onlyCommunityAdmin {
-        require(RahatCommunity.isBeneficiary(_address), "not valid ben");
-        beneficiaries.add(_address);
-    }
+    require(
+      tokenBudget(defaultToken) >= totalVendorAllocation,
+      'not enough available allocation'
+    );
+    emit VendorAllowanceAccept(msg.sender, _amount);
+  }
 
-    function removeBeneficiary(
-        address _address
-    ) public onlyUnlocked onlyCommunityAdmin {
-        beneficiaries.remove(_address);
-    }
+  // #endregion
 
-    function listBeneficiaries(
-        uint start,
-        uint limit
-    ) public view returns (address[] memory _addresses) {
-        for (uint i = 0; i < limit; i++) {
-            _addresses[i] = (beneficiaries.at(start + i));
-        }
-    }
+  // #region ***** Claim Process *********//
+  function requestTokenFromBeneficiary(
+    address _benAddress,
+    uint _amount
+  ) public onlyLocked returns (uint requestId) {
+    requestId = requestTokenFromBeneficiary(
+      _benAddress,
+      _amount,
+      otpServerAddress
+    );
+  }
 
-    function _assignClaims(uint _amount) private {
-        uint requiredBudget = beneficiaries.length() * _amount;
-        require(
-            IERC20(defaultToken).balanceOf(address(this)) >= requiredBudget,
-            "not enough tokens"
-        );
+  function requestTokenFromBeneficiary(
+    address _benAddress,
+    uint _amount,
+    address _otpServerAddress
+  ) public onlyLocked returns (uint requestId) {
+    require(otpServerAddress != address(0), 'invalid otp-server');
+    require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
+    require(
+      vendorAllowance[msg.sender] >= _amount,
+      'not enough vendor allowance'
+    );
 
-        for (uint i = 0; i < beneficiaries.length(); i++) {
-            claims[beneficiaries.at(i)] = _amount;
-        }
-    }
+    //lock permanently
+    if (!_permaLock) _permaLock = true;
 
-    //***** Token functions *********//
-    function acceptToken(
-        address _from,
-        uint256 _amount
-    ) public onlyUnlocked onlyCommunityAdmin {
-        //event community project list;
-        require(
-            RahatCommunity.projectExists(address(this)),
-            "project not approved"
-        );
+    requestId = RahatClaim.createClaim(
+      msg.sender,
+      _benAddress,
+      _otpServerAddress,
+      defaultToken,
+      _amount
+    );
+    tokenRequestIds[msg.sender][_benAddress] = requestId;
+  }
 
-        IERC20(defaultToken).transferFrom(_from, address(this), _amount);
-        tokensReceived += _amount;
-    }
+  function processTokenRequest(
+    address _benAddress,
+    string memory _otp
+  ) public onlyLocked {
+    IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
+      tokenRequestIds[msg.sender][_benAddress],
+      _otp
+    );
+    uint _benTokenBalance = beneficiaryClaims[_claim.claimeeAddress];
+    require(_benTokenBalance >= _claim.amount, 'not enough balace');
 
-    function withdrawSurplusTokens(address _token) public onlyCommunityAdmin {
-        uint _surplus = IERC20(_token).balanceOf(address(this));
-        if (_token == defaultToken) _surplus -= tokensReceived;
-        IERC20(_token).transfer(address(RahatCommunity), _surplus);
-    }
+    _benTokenBalance -= _claim.amount;
+    vendorAllowance[_claim.claimerAddress] -= _claim.amount;
 
-    function addClaimToBeneficiary(
-        address _address,
-        uint _amount
-    ) public onlyUnlocked onlyCommunityAdmin {
-        require(beneficiaries.contains(_address), "not beneficiary");
-        claims[_address] = _amount;
-    }
+    IERC20(_claim.tokenAddress).transfer(_claim.claimerAddress, _claim.amount);
+  }
 
-    function allowanceToVendor(
-        address _address,
-        uint256 _amount
-    ) public onlyUnlocked onlyCommunityAdmin {
-        require(RahatCommunity.isVendor(_address), "Not a Vendor");
-        require(tokensReceived >= _amount, "not enough balance");
-        vendorAllowancePending[_address] = _amount;
-    }
+  // #endregion
 
-    function acceptAllowance(uint256 _amount) public onlyUnlocked {
-        require(RahatCommunity.isVendor(msg.sender), "Not a Vendor");
-        vendorAllowance[msg.sender] += _amount;
-        totalVendorAllocation += _amount;
-        vendorAllowancePending[msg.sender] -= _amount;
-
-        require(
-            tokensReceived >= totalVendorAllocation,
-            "not enough available allocation"
-        );
-    }
-
-    //***** Claim functions *********//
-    function requestTokenFromBeneficiary(
-        address _benAddress,
-        uint _amount
-    ) public onlyLocked returns (uint requestId) {
-        requestId = requestTokenFromBeneficiary(
-            _benAddress,
-            _amount,
-            otpServerAddress
-        );
-    }
-
-    function requestTokenFromBeneficiary(
-        address _benAddress,
-        uint _amount,
-        address _otpServerAddress
-    ) public onlyLocked returns (uint requestId) {
-        require(otpServerAddress != address(0), "invalid otp-server");
-        require(claims[_benAddress] >= _amount, "not enough balance");
-        require(
-            vendorAllowance[msg.sender] >= _amount,
-            "not enough vendor allowance"
-        );
-        _isClaimed = true;
-
-        requestId = RahatClaim.createClaim(
-            msg.sender,
-            _benAddress,
-            _otpServerAddress,
-            defaultToken,
-            _amount
-        );
-        tokenRequestIds[msg.sender][_benAddress] = requestId;
-    }
-
-    function processTokenRequest(
-        address _benAddress,
-        string memory _otp
-    ) public onlyLocked {
-        IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
-            tokenRequestIds[msg.sender][_benAddress],
-            _otp
-        );
-        uint _benTokenBalance = claims[_claim.claimeeAddress];
-        require(_benTokenBalance >= _claim.amount, "not enough balace");
-
-        _benTokenBalance -= _claim.amount;
-        vendorAllowance[_claim.claimerAddress] -= _claim.amount;
-
-        IERC20(_claim.tokenAddress).transfer(
-            _claim.claimerAddress,
-            _claim.amount
-        );
-    }
-
-    function updateOtpServerAddress(
-        address _address
-    ) public onlyCommunityAdmin {
-        otpServerAddress = _address;
-    }
+  // #region ***** Housekeeping *********//
+  function updateOtpServer(address _address) public onlyCommunityAdmin {
+    otpServerAddress = _address;
+    emit OtpServerUpdated(_address);
+  }
+  // #endregion
 }

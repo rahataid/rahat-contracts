@@ -1,0 +1,8 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "eslint.run": "onSave",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "githubIssues.issueBranchTitle": "${user}/${sanitizedIssueTitle}",
+  "prettier.singleQuote": true
+}

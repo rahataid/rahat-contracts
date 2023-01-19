@@ -1,36 +1,57 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
-import "../../interfaces/IRahatProject.sol";
+import '../../interfaces/IRahatProject.sol';
 
 interface ICVAProject is IRahatProject {
-    ///@dev Accept Tokens from Rahatdonor by projectManager(communityManager)
-    ///@dev Save the received token in a set.
-    ///@dev Save the no. of tokens issued to track total tokens received
-    function acceptToken(address _from, uint256 _amount) external;
+  ///@dev Project's default token
+  function defaultToken() external returns (address);
 
-    ///@dev Assign Token to beneficiary
-    function addClaimToBeneficiary(address _address, uint _amount) external;
+  function otpServerAddress() external returns (address);
 
-    ///@dev withdraw claims of beneficiary by beneficary
-    // function withdrawClaims(address _to, uint256 _amount) external;
+  function isDonor(address _address) external returns (bool);
 
-    //***** Claim functions *********//
-    ///@dev Request For tokens From Beneficay by vendor
-    function requestTokenFromBeneficiary(
-        address _benAddress,
-        uint _amount
-    ) external returns (uint requestId);
+  function beneficiaryClaims(address _address) external returns (uint);
 
-    function requestTokenFromBeneficiary(
-        address _benAddress,
-        uint _amount,
-        address _otpServerAddress
-    ) external returns (uint requestId);
+  function lockProject() external;
 
-    ///@dev Process token request to beneficiary by otp verfication
-    function processTokenRequest(
-        address _benAddress,
-        string memory _otp
-    ) external;
+  function unlockProject() external;
+
+  ///@dev Add beneficiary to project with claim amount;
+  function addBeneficiary(address _address, uint _claimAmount) external;
+
+  function removeBeneficiary(address _address) external;
+
+  function totalClaimsAssgined() external view returns (uint _totalClaims);
+
+  ///@dev Accept Tokens from Rahatdonor by projectManager(communityManager)
+  ///@dev Save the received token in a set.
+  ///@dev Save the no. of tokens issued to track total tokens received
+  function acceptToken(address _from, uint _amount) external;
+
+  function withdrawToken(address _token) external;
+
+  function createAllowanceToVendor(address _address, uint256 _amount) external;
+
+  function acceptAllowanceByVendor(uint256 _amount) external;
+
+  ///@dev Request For tokens From Beneficay by vendor
+  function requestTokenFromBeneficiary(
+    address _benAddress,
+    uint _amount
+  ) external returns (uint requestId);
+
+  function requestTokenFromBeneficiary(
+    address _benAddress,
+    uint _amount,
+    address _otpServerAddress
+  ) external returns (uint requestId);
+
+  ///@dev Process token request to beneficiary by otp verfication
+  function processTokenRequest(
+    address _benAddress,
+    string memory _otp
+  ) external;
+
+  function updateOtpServer(address _address) external;
 }

@@ -3,16 +3,19 @@
     "compile": "hardhat compile",
     "contract:coverage": "hardhat coverage",
     "contract:test": "hardhat test",
+    "prettier": "prettier --write 'src/contracts/**/*.sol'",
     "contract:test-oracle": "hardhat test ./tests/testOracle.test.js"
   },
   "dependencies": {},
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.1",
-    "ethers": "^5.7.2",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "^4.8.0",
     "chai": "^4.3.7",
+    "ethers": "^5.7.2",
     "hardhat": "^2.12.4",
+    "prettier": "^2.8.3",
+    "prettier-plugin-solidity": "^1.1.1",
     "solidity-coverage": "^0.8.2"
   }
 }
