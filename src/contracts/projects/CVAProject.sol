@@ -55,13 +55,14 @@ contract CVAProject is AbstractProject, ICVAProject {
   }
 
   // #region ***** Project Functions *********//
-  function lockProject() public onlyUnlocked {
+  function lockProject() public onlyUnlocked  {
     require(isDonor[msg.sender], 'not a donor');
     require(tokenBudget(defaultToken) > 0, 'no tokens');
     _lockProject();
   }
 
   function unlockProject() public onlyLocked {
+    require(isDonor[msg.sender], 'not a donor');
     _unlockProject();
   }
 
@@ -114,6 +115,7 @@ contract CVAProject is AbstractProject, ICVAProject {
     address _from,
     uint256 _amount
   ) public onlyUnlocked onlyCommunityAdmin {
+    isDonor[_from] = true;
     _acceptToken(defaultToken, _from, _amount);
   }
 

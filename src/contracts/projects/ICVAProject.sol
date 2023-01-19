@@ -13,10 +13,6 @@ interface ICVAProject is IRahatProject {
 
   function beneficiaryClaims(address _address) external returns (uint);
 
-  function lockProject() external;
-
-  function unlockProject() external;
-
   ///@dev Add beneficiary to project with claim amount;
   function assignClaims(address _address, uint _claimAmount) external;
 

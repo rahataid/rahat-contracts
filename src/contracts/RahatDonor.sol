@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import './RahatToken.sol';
 import '../libraries/AbstractTokenActions.sol';
+import '../interfaces/IRahatProject.sol';
 
 /// @title Donor contract to create tokens
 /// @author Rumsan Associates
@@ -41,6 +42,14 @@ contract RahatDonor is AbstractTokenActions {
     RahatToken token = RahatToken(_token);
     token.mint(address(this), _amount);
     token.approve(_approveAddress, _amount);
+  }
+
+  function lockProject(address _address) public OnlyOwner {
+    IRahatProject(_address).lockProject();
+  }
+
+  function unlockProject(address _address) public OnlyOwner {
+    IRahatProject(_address).unlockProject();
   }
 
   function addTokenOwner(address _token, address _ownerAddress) public OnlyOwner {

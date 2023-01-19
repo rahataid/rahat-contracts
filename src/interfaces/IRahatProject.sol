@@ -6,6 +6,10 @@ interface IRahatProject {
 
   function isLocked() external view returns (bool);
 
+  function lockProject() external;
+
+  function unlockProject() external;
+
   function community() external view returns (address);
 
   function addBeneficiary(address _address) external;

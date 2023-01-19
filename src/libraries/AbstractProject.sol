@@ -117,7 +117,6 @@ abstract contract AbstractProject is IRahatProject, Multicall {
 
     IERC20(_tokenAddress).transferFrom(_from, address(this), _amount);
     _tokenBudgetIncrease(_tokenAddress, _amount);
-
     emit TokenReceived(_tokenAddress, _from, _amount);
   }
 

@@ -138,7 +138,6 @@ describe.only('------ Tayaba Flow ------', function () {
   describe('Token Allowance Disbursement to Vendors', function () {
     it('should add vendor to community', async function () {
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(false);
-      const vendorRole = await rahatCommunity1.VENDOR_ROLE();
       await rahatCommunity1.connect(admin).grantRole(vendorRole, vendor1.address);
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(true);
     });
@@ -188,12 +187,30 @@ describe.only('------ Tayaba Flow ------', function () {
       );
       expect(beneficiary1_count.toNumber()).to.equal(2);
     });
+
+    it('should lock project',async function() {
+        expect(await cvaProject1.isLocked()).to.equal(false);
+        await rahatDonor.connect(donor).lockProject(cvaProject1.address);
+        expect(await cvaProject1.isLocked()).to.equal(true);
+
+    })
   });
 
   describe('Vendor to Beneficiary Charge Process', function () {
-    it('should charge tokens to beneficairy', async function () {});
+    it('should charge tokens to beneficairy', async function () {
+           const tx =   await cvaProject1
+        .connect(vendor1)
+        .requestTokenFromBeneficiary(beneficiary1.address, cvaProjectDetails1.beneficiaryClaim1,otpServer1.address);
+        console.log({tx})
+    });
 
-    it('should approve vendor request to charge token by otpServer', async function () {}),
-      it('should process the token charge re', async function () {});
+    it('should approve vendor request to charge token by otpServer', async function () {
+                expect(0).to.equal(1);
+
+    }),
+      it('should process the token charge re', async function () {
+                expect(0).to.equal(1);
+
+      });
   });
 });
