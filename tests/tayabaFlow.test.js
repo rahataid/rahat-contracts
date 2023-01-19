@@ -49,8 +49,6 @@ describe.only("------ Tayaba Flow ------", function () {
         //const RahatRegistry = await ethers.getContractFactory("RahatRegistry");
         const RahatClaim = await ethers.getContractFactory("RahatClaim");
         const RahatCommunity = await ethers.getContractFactory("RahatCommunity");
-
-
         //common
         rahatDonor = await RahatDonor.deploy(donor.address);
         //rahatRegistry = await RahatRegistry.deploy(admin.address);
@@ -66,7 +64,7 @@ describe.only("------ Tayaba Flow ------", function () {
 
     describe("Deployment", function () {
         it("Should deploy contract", async function () {
-            donorAdmins = await rahatDonor.listAdmins();
+            donorAdmins = await rahatDonor.listOwners();
             expect(donorAdmins[0]).to.equal(donor.address);
             expect(await rahatCommunity1.name()).to.equal(communityName1);
             console.log("rahatDonor:", rahatDonor.address);
@@ -108,8 +106,8 @@ describe.only("------ Tayaba Flow ------", function () {
 
         it("Should add project to community", async function () {
             //TODO check if project is deployed for this community?
-            await rahatCommunity1.connect(admin).addProject(cvaProject1.address);
-            expect(await rahatCommunity1.projectExists(cvaProject1.address)).to.equal(true);
+            await rahatCommunity1.connect(admin).approveProject(cvaProject1.address);
+            expect(await rahatCommunity1.isProject(cvaProject1.address)).to.equal(true);
         })
     })
 
@@ -131,27 +129,26 @@ describe.only("------ Tayaba Flow ------", function () {
 
         it("should add vendor to community", async function () {
             expect(await rahatCommunity1.isVendor(vendor1.address)).to.equal(false);
-            await rahatCommunity1.connect(admin).addVendor(vendor1.address);
+            const vendorRole = await rahatCommunity1.VENDOR_ROLE();
+            await rahatCommunity1.connect(admin).grantRole(vendorRole,vendor1.address);
             expect(await rahatCommunity1.isVendor(vendor1.address)).to.equal(true);
         })
         it("should transfer allowances to vendor1", async function () {
-            await cvaProject1.connect(admin).allowanceToVendor(vendor1.address,
+            await cvaProject1.connect(admin).createAllowanceToVendor(vendor1.address,
                 cvaProjectDetails1.vendorTransferAmount1)
             const pendingAllowanceToVendor1 = await cvaProject1.vendorAllowancePending(vendor1.address);
-            console.log('testet', pendingAllowanceToVendor1.toNumber())
             expect(pendingAllowanceToVendor1.toNumber().toString()).to.equal(cvaProjectDetails1.vendorTransferAmount1);
         })
 
-        it("Should accept tokens from project", async function () {
-            await cvaProject1.connect(vendor1).acceptAllowance(cvaProjectDetails1.vendorTransferAmount1);
+        it("Should accept allowance from project", async function () {
+            await cvaProject1.connect(vendor1).acceptAllowanceByVendor(cvaProjectDetails1.vendorTransferAmount1);
             const allowanceToVendor1 = await cvaProject1.vendorAllowance(vendor1.address);
-            console.log(allowanceToVendor1.toNumber())
             expect(allowanceToVendor1.toNumber().toString()).to.equal(cvaProjectDetails1.vendorTransferAmount1);
         })
 
     })
 
-    describe("Beneficiary Management", function () {
+    describe("Beneficiary Claims Management", function () {
         it("should add beneficiary to community", async function () {
             expect(await rahatCommunity1.isBeneficiary(beneficiary1.address)).to.equal(false);
             expect(await rahatCommunity1.isBeneficiary(beneficiary1.address)).to.equal(false)
@@ -161,17 +158,30 @@ describe.only("------ Tayaba Flow ------", function () {
             expect(await rahatCommunity1.isBeneficiary(beneficiary1.address)).to.equal(true)
         })
 
-        it("should add beneficiary to project", async function () {
-            expect(await cvaProject1.isBeneficiary(beneficiary1.address)).to.equal(false)
-            await cvaProject1.connect(admin).addBeneficiary(beneficiary1.address);
-            expect(await cvaProject1.isBeneficiary(beneficiary1.address)).to.equal(true)
+        it("should assign token claims to beneficiary1", async function () {
+            await cvaProject1.connect(admin).assignClaims(beneficiary1.address, cvaProjectDetails1.beneficiaryClaim1)
+            await cvaProject1.connect(admin).assignClaims(beneficiary2.address, cvaProjectDetails1.beneficiaryClaim2)
+
+            const beneficiary1_claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
+            const beneficiary1_count = await cvaProject1.beneficiaryCount();
+            expect(beneficiary1_claim.toNumber().toString()).to.equal(cvaProjectDetails1.beneficiaryClaim1);
+            expect(beneficiary1_count.toNumber()).to.equal(2);
+        })
+
+    })
+
+    describe("Vendor to Beneficiary Charge Process", function(){
+
+        it("should charge tokens to beneficairy",async function(){
 
         })
 
-        it("should assign token claims to beneficiary1", async function () {
-            await cvaProject1.connect(admin).addClaimToBeneficiary(beneficiary1.address, cvaProjectDetails1.beneficiaryClaim1)
-            const beneficiary1_claim = await cvaProject1.claims(beneficiary1.address, token1.address);
-            expect(beneficiary1_claim.toNumber().toString()).to.equal(cvaProjectDetails1.beneficiaryClaim1);
+        it("should approve vendor request to charge token by otpServer",async function(){
+
+        }),
+
+        it("should process the token charge re",async function(){
+
         })
 
     })

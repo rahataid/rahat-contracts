@@ -23,7 +23,7 @@ contract RahatToken is
     address _admin,
     uint8 _decimals
   ) ERC20(_name, _symbol) {
-    addOwner(_admin);
+    _addOwner(_admin);
     decimalPoints = _decimals;
   }
 

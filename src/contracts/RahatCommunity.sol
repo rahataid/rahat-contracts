@@ -25,7 +25,7 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
   mapping(address => bool) public override isBeneficiary;
   mapping(address => bool) public override isProject;
 
-  bytes32 private constant VENDOR_ROLE = keccak256('VENDOR');
+  bytes32 public constant VENDOR_ROLE = keccak256('VENDOR');
   // #endregion
 
   // #region ***** Modifiers *********//
@@ -45,6 +45,10 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
   // #region ***** Role functions *********//
   function isAdmin(address _address) public view returns (bool) {
     return hasRole(DEFAULT_ADMIN_ROLE, _address);
+  }
+
+  function isVendor(address _address) public view returns (bool) {
+    return hasRole(VENDOR_ROLE, _address);
   }
 
   function addBeneficiary(address _address) public OnlyAdmin {

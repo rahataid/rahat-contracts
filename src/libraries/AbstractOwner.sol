@@ -24,14 +24,22 @@ abstract contract AbstractOwner is IOwner, Multicall {
     _;
   }
 
+   /// @notice Add an account to the owner role
+  /// @param _address address of new owner
+  function _addOwner(
+    address _address
+  )  internal returns (bool success) {
+    require(owners.length() <= maxOwners, 'owners exceeded');
+    success = owners.add(_address);
+    emit OwnerAdded(_address);
+  }
+
   /// @notice Add an account to the owner role
   /// @param _address address of new owner
   function addOwner(
     address _address
   ) public virtual OnlyOwner returns (bool success) {
-    require(owners.length() <= maxOwners, 'owners exceeded');
-    success = owners.add(_address);
-    emit OwnerAdded(_address);
+    _addOwner(_address);
   }
 
   /// @notice Remove an account from the owner role

@@ -14,7 +14,8 @@ contract RahatDonor is AbstractTokenActions {
   /// @notice All the supply is allocated to this contract
   /// @dev deploys AidToken and Rahat contract by sending supply to this contract
   constructor(address _admin) {
-    addOwner(_admin);
+    //owners.add(_admin)
+    _addOwner(_admin);
   }
 
   //#region Token function
