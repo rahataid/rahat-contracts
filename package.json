@@ -1,10 +1,9 @@
 {
   "scripts": {
     "compile": "hardhat compile",
-    "contract:coverage": "hardhat coverage",
-    "contract:test": "hardhat test",
-    "prettier": "prettier --write 'src/contracts/**/*.sol'",
-    "contract:test-oracle": "hardhat test ./tests/testOracle.test.js"
+    "coverage": "hardhat coverage",
+    "test": "hardhat test",
+    "prettier": "prettier --write 'src/contracts/**/*.sol'"
   },
   "dependencies": {},
   "devDependencies": {

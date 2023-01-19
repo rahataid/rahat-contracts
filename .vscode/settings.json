@@ -4,5 +4,6 @@
   "eslint.run": "onSave",
   "javascript.updateImportsOnFileMove.enabled": "always",
   "githubIssues.issueBranchTitle": "${user}/${sanitizedIssueTitle}",
-  "prettier.singleQuote": true
+  "prettier.singleQuote": true,
+  "prettier.printWidth": 100
 }

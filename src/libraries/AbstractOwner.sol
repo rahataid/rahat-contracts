@@ -17,18 +17,13 @@ abstract contract AbstractOwner is IOwner, Multicall {
   EnumerableSet.AddressSet internal owners;
 
   modifier OnlyOwner() {
-    require(
-      owners.contains(msg.sender),
-      'Only owner can execute this transaction'
-    );
+    require(owners.contains(msg.sender), 'Only owner can execute this transaction');
     _;
   }
 
-   /// @notice Add an account to the owner role
+  /// @notice Add an account to the owner role
   /// @param _address address of new owner
-  function _addOwner(
-    address _address
-  )  internal returns (bool success) {
+  function _addOwner(address _address) internal returns (bool success) {
     require(owners.length() <= maxOwners, 'owners exceeded');
     success = owners.add(_address);
     emit OwnerAdded(_address);
@@ -36,17 +31,13 @@ abstract contract AbstractOwner is IOwner, Multicall {
 
   /// @notice Add an account to the owner role
   /// @param _address address of new owner
-  function addOwner(
-    address _address
-  ) public virtual OnlyOwner returns (bool success) {
-    _addOwner(_address);
+  function addOwner(address _address) public virtual OnlyOwner returns (bool success) {
+    return _addOwner(_address);
   }
 
   /// @notice Remove an account from the owner role
   /// @param _address address of existing owner
-  function removeOwner(
-    address _address
-  ) public virtual OnlyOwner returns (bool success) {
+  function removeOwner(address _address) public virtual OnlyOwner returns (bool success) {
     success = owners.remove(_address);
     emit OwnerRemoved(_address);
   }

@@ -8,13 +8,7 @@ import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '../interfaces/IRahatToken.sol';
 import '../libraries/AbstractOwner.sol';
 
-contract RahatToken is
-  AbstractOwner,
-  ERC20,
-  ERC20Snapshot,
-  ERC20Burnable,
-  IRahatToken
-{
+contract RahatToken is AbstractOwner, ERC20, ERC20Snapshot, ERC20Burnable, IRahatToken {
   uint8 private decimalPoints;
 
   constructor(
@@ -35,10 +29,7 @@ contract RahatToken is
   ///@dev Mint x amount of ERC20 token to given address
   ///@param _address Address to which ERC20 token will be minted
   ///@param _amount Amount of token to be minted
-  function mint(
-    address _address,
-    uint256 _amount
-  ) public OnlyOwner returns (uint256) {
+  function mint(address _address, uint256 _amount) public OnlyOwner returns (uint256) {
     _mint(_address, _amount);
     return _amount;
   }

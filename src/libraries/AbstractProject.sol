@@ -93,9 +93,7 @@ abstract contract AbstractProject is IRahatProject, Multicall {
   // #endregion
 
   // #region ***** Token Functions *********//
-  function tokenBudget(
-    address _tokenAddress
-  ) public view virtual returns (uint) {
+  function tokenBudget(address _tokenAddress) public view virtual returns (uint) {
     return _tokenBudget[_tokenAddress];
   }
 
@@ -114,11 +112,7 @@ abstract contract AbstractProject is IRahatProject, Multicall {
     emit TokenBudgetDecrease(_tokenAddress, _amount);
   }
 
-  function _acceptToken(
-    address _tokenAddress,
-    address _from,
-    uint256 _amount
-  ) internal {
+  function _acceptToken(address _tokenAddress, address _from, uint256 _amount) internal {
     require(RahatCommunity.isProject(address(this)), 'project not approved');
 
     IERC20(_tokenAddress).transferFrom(_from, address(this), _amount);

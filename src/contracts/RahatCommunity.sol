@@ -2,16 +2,14 @@
 pragma solidity ^0.8.17;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
+import '@openzeppelin/contracts/utils/Multicall.sol';
 import '../interfaces/IRahatClaim.sol';
 import '../interfaces/IRahatProject.sol';
 import '../interfaces/IRahatCommunity.sol';
 
-contract RahatCommunity is IRahatCommunity, AccessControl {
+contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
   // #region ***** Events *********//
-  event ProjectApprovalRequest(
-    address indexed requestor,
-    address indexed project
-  );
+  event ProjectApprovalRequest(address indexed requestor, address indexed project);
   event ProjectApproved(address indexed);
   event ProjectRevoked(address indexed);
 
@@ -45,10 +43,6 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
   // #region ***** Role functions *********//
   function isAdmin(address _address) public view returns (bool) {
     return hasRole(DEFAULT_ADMIN_ROLE, _address);
-  }
-
-  function isVendor(address _address) public view returns (bool) {
-    return hasRole(VENDOR_ROLE, _address);
   }
 
   function addBeneficiary(address _address) public OnlyAdmin {
