@@ -17,7 +17,7 @@ contract RahatClaim is IRahatClaim {
     address _tokenAddress,
     uint _amount
   ) public returns (uint claimId) {
-    claimId = claimCount;
+    claimId = ++claimCount;
     claims[claimId] = Claim({
       ownerAddress: msg.sender,
       claimerAddress: _claimerAddress,
@@ -25,11 +25,10 @@ contract RahatClaim is IRahatClaim {
       otpServerAddress: _otpServerAddress,
       tokenAddress: _tokenAddress,
       amount: _amount,
-      expiryDate: block.timestamp,
+      expiryDate: 0,
       otpHash: bytes32(0),
       isProcessed: false
     });
-    claimCount += 1;
     emit ClaimCreated(claimId);
   }
 
@@ -42,16 +41,18 @@ contract RahatClaim is IRahatClaim {
     emit OtpAddedToClaim(_claimId);
   }
 
-  function processClaim(uint _claimId, string memory _otp) public returns (Claim memory _claim) {
-    _claim = claims[_claimId];
+  function processClaim(uint _claimId, string memory _otp) public returns (Claim memory claim_) {
+    Claim storage _claim = claims[_claimId];
     require(_claim.ownerAddress == msg.sender, 'not owner');
-    require(block.timestamp >= _claim.expiryDate, 'expired');
+    require(block.timestamp <= _claim.expiryDate, 'expired');
     require(_claim.isProcessed == false, 'already processed');
     bytes32 _otpHash = findHash(_otp);
     require(_claim.otpHash == _otpHash, 'invalid otp');
 
     _claim.isProcessed = true;
     emit ClaimProcessed(_claimId);
+    return _claim;
+
   }
 
   function findHash(string memory _data) public pure returns (bytes32) {

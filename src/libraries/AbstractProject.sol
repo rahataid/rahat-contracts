@@ -49,7 +49,7 @@ abstract contract AbstractProject is IRahatProject, Multicall {
   }
 
   modifier onlyLocked() {
-    require(!isLocked, 'project unlocked');
+    require(isLocked, 'project unlocked');
     _;
   }
 
