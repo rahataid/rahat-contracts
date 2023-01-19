@@ -5,7 +5,10 @@
     "test": "hardhat test",
     "prettier": "prettier --write 'src/contracts/**/*.sol'"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "ethereum-waffle": "^3.4.4"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
