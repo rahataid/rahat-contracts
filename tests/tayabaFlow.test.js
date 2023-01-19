@@ -43,6 +43,11 @@ describe.only('------ Tayaba Flow ------', function () {
     vendorTransferAmount2: '20',
   };
 
+  const otpServerDetails = {
+    otpExpiryTime: 500,
+    otp: '1212',
+  };
+
   before(async function () {
     [deployer, donor, admin, manager, vendor1, vendor2, otpServer1, beneficiary1, beneficiary2] =
       await ethers.getSigners();
@@ -54,10 +59,8 @@ describe.only('------ Tayaba Flow ------', function () {
     rahatDonor = await RahatDonor.deploy(donor.address);
     //rahatRegistry = await RahatRegistry.deploy(admin.address);
     rahatClaim = await RahatClaim.deploy();
-
     //community
     rahatCommunity1 = await RahatCommunity.deploy(communityName1, admin.address);
-
     vendorRole = await rahatCommunity1.VENDOR_ROLE();
   });
 
@@ -66,7 +69,7 @@ describe.only('------ Tayaba Flow ------', function () {
       donorAdmins = await rahatDonor.listOwners();
       expect(donorAdmins[0]).to.equal(donor.address);
       expect(await rahatCommunity1.name()).to.equal(communityName1);
-      console.log('rahatDonor:', rahatDonor.address);
+      expect(rahatClaim.address).to.be.a('string');
     });
   });
 
@@ -121,6 +124,7 @@ describe.only('------ Tayaba Flow ------', function () {
         rahatDonor.address,
         cvaProject1.address
       );
+
       expect(allowanceTocvaProject_1.toNumber().toString()).to.equal(
         cvaProjectDetails1.approveAmount
       );
@@ -188,29 +192,74 @@ describe.only('------ Tayaba Flow ------', function () {
       expect(beneficiary1_count.toNumber()).to.equal(2);
     });
 
-    it('should lock project',async function() {
-        expect(await cvaProject1.isLocked()).to.equal(false);
-        await rahatDonor.connect(donor).lockProject(cvaProject1.address);
-        expect(await cvaProject1.isLocked()).to.equal(true);
-
-    })
+    it('should lock project', async function () {
+      expect(await cvaProject1.isLocked()).to.equal(false);
+      await rahatDonor.connect(donor).lockProject(cvaProject1.address);
+      expect(await cvaProject1.isLocked()).to.equal(true);
+    });
   });
 
   describe('Vendor to Beneficiary Charge Process', function () {
     it('should charge tokens to beneficairy', async function () {
-           const tx =   await cvaProject1
+      const tx = await cvaProject1
         .connect(vendor1)
-        .requestTokenFromBeneficiary(beneficiary1.address, cvaProjectDetails1.beneficiaryClaim1,otpServer1.address);
-        console.log({tx})
+        ['requestTokenFromBeneficiary(address,uint256,address)'](
+          beneficiary1.address,
+          cvaProjectDetails1.beneficiaryClaim1,
+          otpServer1.address
+        );
+      const receipt = await tx.wait();
+      const event = receipt.events[0];
+      const decodedEventArgs = rahatClaim.interface.decodeEventLog(
+        'ClaimCreated',
+        event.data,
+        event.topics
+      );
+      expect(decodedEventArgs.claimId.toNumber()).to.equal(1);
     });
 
-    it('should approve vendor request to charge token by otpServer', async function () {
-                expect(0).to.equal(1);
+    it('should not be able to approve vendor request by random wallet', async function () {
+      const otpHash = ethers.utils.id(otpServerDetails.otp);
+      const expiryDate = Math.floor(Date.now() / 1000) + otpServerDetails.otpExpiryTime;
+      const intitialClaimsState = await rahatClaim.claims(1);
+      expect(intitialClaimsState.expiryDate.toNumber()).to.equal(0);
+      expect(intitialClaimsState.otpHash).to.equal(ethers.constants.HashZero);
+      expect(intitialClaimsState.claimerAddress).to.equal(vendor1.address);
+      expect(rahatClaim.connect(vendor1).addOtpToClaim(1, otpHash, expiryDate)).to.be.revertedWith(
+        'unauthorized otpServer'
+      );
 
+      const finalClaimsState = await rahatClaim.claims(1);
+      expect(finalClaimsState.expiryDate.toNumber()).to.not.equal(expiryDate);
+      expect(finalClaimsState.otpHash).to.not.equal(otpHash);
     }),
-      it('should process the token charge re', async function () {
-                expect(0).to.equal(1);
+      it('should approve vendor request and add OTP via otpServers', async function () {
+        const otpHash = ethers.utils.id(otpServerDetails.otp);
+        const expiryDate = Math.floor(Date.now() / 1000) + otpServerDetails.otpExpiryTime;
+        const intitialClaimsState = await rahatClaim.claims(1);
+        expect(intitialClaimsState.expiryDate.toNumber()).to.equal(0);
+        expect(intitialClaimsState.otpHash).to.equal(ethers.constants.HashZero);
+        expect(intitialClaimsState.claimerAddress).to.equal(vendor1.address);
+        await rahatClaim.connect(otpServer1).addOtpToClaim(1, otpHash, expiryDate);
 
+        const finalClaimsState = await rahatClaim.claims(1);
+        expect(finalClaimsState.expiryDate.toNumber()).to.equal(expiryDate);
+        expect(finalClaimsState.otpHash).to.equal(otpHash);
+      }),
+      it('should process the token charge request', async function () {
+        const initialVendorBalance = await token1.balanceOf(vendor1.address);
+        expect(initialVendorBalance.toNumber()).to.equal(0);
+        const initialClaimState = await rahatClaim.claims(1);
+        expect(initialClaimState.isProcessed).to.equal(false);
+        await cvaProject1
+          .connect(vendor1)
+          .processTokenRequest(beneficiary1.address, otpServerDetails.otp);
+        const finalVendorBalance = await token1.balanceOf(vendor1.address);
+        const finalClaimsState = await rahatClaim.claims(1);
+        expect(finalClaimsState.isProcessed).to.equal(true);
+        expect(finalVendorBalance.toNumber().toString()).to.equal(
+          cvaProjectDetails1.beneficiaryClaim1
+        );
       });
   });
 });
