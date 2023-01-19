@@ -2,17 +2,18 @@
 pragma solidity ^0.8.17;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '../interfaces/IRahatClaim.sol';
 import '../interfaces/IRahatProject.sol';
 import '../interfaces/IRahatCommunity.sol';
 
 contract RahatCommunity is IRahatCommunity, AccessControl {
-  using EnumerableSet for EnumerableSet.AddressSet;
   // #region ***** Events *********//
-  event ProjectRequested(address indexed requestor, address indexed project);
-  event ProjectAdded(address indexed requestor, address indexed project);
-  event ProjectRemoved(address indexed requestor, address indexed project);
+  event ProjectApprovalRequest(
+    address indexed requestor,
+    address indexed project
+  );
+  event ProjectApproved(address indexed);
+  event ProjectRevoked(address indexed);
 
   event BeneficiaryAdded(address indexed);
   event BeneficiaryRemoved(address indexed);
@@ -22,9 +23,7 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
   string public name;
 
   mapping(address => bool) public override isBeneficiary;
-  mapping(address => bool) public override projects;
-
-  EnumerableSet.AddressSet private projects;
+  mapping(address => bool) public override isProject;
 
   bytes32 private constant VENDOR_ROLE = keccak256('VENDOR');
   // #endregion
@@ -61,33 +60,19 @@ contract RahatCommunity is IRahatCommunity, AccessControl {
   // #endregion
 
   // #region ***** Project functions *********//
-  function projectCount() public view returns (uint256) {
-    return projects.length();
+
+  function approveProject(address _projectAddress) public OnlyAdmin {
+    if (!isProject[_projectAddress]) emit ProjectApproved(_projectAddress);
+    isProject[_projectAddress] = true;
   }
 
-  function projectExists(address _projectAddress) public view returns (bool) {
-    return projects.contains(_projectAddress);
+  function revokeProject(address _projectAddress) public OnlyAdmin {
+    if (isProject[_projectAddress]) emit ProjectRevoked(_projectAddress);
+    isProject[_projectAddress] = false;
   }
 
-  function addProject(address _projectAddress) public OnlyAdmin {
-    projects.add(_projectAddress);
-  }
-
-  function removeProject(address _projectAddress) public OnlyAdmin {
-    projects.remove(_projectAddress);
-  }
-
-  function requestToAddProject(address _projectAddress) public {
-    emit ProjectRequested(tx.origin, _projectAddress);
-  }
-
-  function listProjects(
-    uint start,
-    uint limit
-  ) public view returns (address[] memory _addresses) {
-    for (uint i = 0; i < limit; i++) {
-      _addresses[i] = (projects.at(start + i));
-    }
+  function requestProjectApproval(address _projectAddress) public {
+    emit ProjectApprovalRequest(tx.origin, _projectAddress);
   }
   // #endregion
 }

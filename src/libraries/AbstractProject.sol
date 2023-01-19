@@ -119,10 +119,7 @@ abstract contract AbstractProject is IRahatProject, Multicall {
     address _from,
     uint256 _amount
   ) internal {
-    require(
-      RahatCommunity.projectExists(address(this)),
-      'project not approved'
-    );
+    require(RahatCommunity.isProject(address(this)), 'project not approved');
 
     IERC20(_tokenAddress).transferFrom(_from, address(this), _amount);
     _tokenBudgetIncrease(_tokenAddress, _amount);

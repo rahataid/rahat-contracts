@@ -51,7 +51,7 @@ contract CVAProject is AbstractProject, ICVAProject {
     defaultToken = _defaultToken;
     RahatClaim = IRahatClaim(_rahatClaim);
     otpServerAddress = _otpServerAddress;
-    RahatCommunity.requestToAddProject(address(this));
+    RahatCommunity.requestProjectApproval(address(this));
   }
 
   // #region ***** Project Functions *********//
