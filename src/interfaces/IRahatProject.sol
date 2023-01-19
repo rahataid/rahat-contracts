@@ -8,6 +8,10 @@ interface IRahatProject {
 
   function community() external view returns (address);
 
+  function addBeneficiary(address _address) external;
+
+  function removeBeneficiary(address _address) external;
+
   function isBeneficiary(address _address) external view returns (bool);
 
   function beneficiaryCount() external view returns (uint256);

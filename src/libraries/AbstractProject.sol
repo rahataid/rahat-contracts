@@ -81,13 +81,13 @@ abstract contract AbstractProject is IRahatProject, Multicall {
 
   function _addBeneficiary(address _address) internal {
     require(RahatCommunity.isBeneficiary(_address), 'not valid ben');
+    if (!_beneficiaries.contains(_address)) emit BeneficiaryAdded(_address);
     _beneficiaries.add(_address);
-    emit BeneficiaryAdded(_address);
   }
 
   function _removeBeneficiary(address _address) internal {
+    if (_beneficiaries.contains(_address)) emit BeneficiaryRemoved(_address);
     _beneficiaries.remove(_address);
-    emit BeneficiaryRemoved(_address);
   }
 
   // #endregion

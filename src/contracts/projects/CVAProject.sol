@@ -70,10 +70,15 @@ contract CVAProject is AbstractProject, ICVAProject {
   // #region ***** Beneficiary Function *********//
 
   function addBeneficiary(
+    address _address
+  ) public onlyUnlocked onlyCommunityAdmin {
+    _addBeneficiary(_address);
+  }
+
+  function assignClaims(
     address _address,
     uint _claimAmount
   ) public onlyUnlocked onlyCommunityAdmin {
-    require(RahatCommunity.isBeneficiary(_address), 'not valid ben');
     _addBeneficiary(_address);
     _assignClaims(_address, _claimAmount);
   }
