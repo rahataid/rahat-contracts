@@ -5,10 +5,7 @@
     "test": "hardhat test",
     "prettier": "prettier --write 'src/contracts/**/*.sol'"
   },
-  "dependencies": {
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "ethereum-waffle": "^3.4.4"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
@@ -18,6 +15,8 @@
     "hardhat": "^2.12.4",
     "prettier": "^2.8.3",
     "prettier-plugin-solidity": "^1.1.1",
-    "solidity-coverage": "^0.8.2"
+    "solidity-coverage": "^0.8.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "ethereum-waffle": "^3.4.4"
   }
 }
