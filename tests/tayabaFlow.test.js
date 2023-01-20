@@ -139,9 +139,17 @@ describe.only('------ Tayaba Flow ------', function () {
     });
 
     it('should accept fund from donor and get the tokens', async function () {
+      const allowanceToProject = await token1.allowance(rahatDonor.address, cvaProject1.address);
+      expect(allowanceToProject.toNumber().toString()).to.equal(cvaProjectDetails1.approveAmount);
       await cvaProject1
         .connect(admin)
-        .acceptToken(rahatDonor.address, cvaProjectDetails1.approveAmount);
+        .acceptToken(rahatDonor.address, allowanceToProject.toNumber().toString());
+      const finalAllowanceToProject = await token1.allowance(
+        rahatDonor.address,
+        cvaProject1.address
+      );
+      expect(finalAllowanceToProject.toNumber()).to.equal(0);
+
       const balanceOfProject_1 = await token1.balanceOf(cvaProject1.address);
       expect(balanceOfProject_1.toNumber().toString()).to.equal(cvaProjectDetails1.approveAmount);
     });
