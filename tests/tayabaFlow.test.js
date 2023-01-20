@@ -256,6 +256,13 @@ describe.only('------ Tayaba Flow ------', function () {
           .processTokenRequest(beneficiary1.address, otpServerDetails.otp);
         const finalVendorBalance = await token1.balanceOf(vendor1.address);
         const finalClaimsState = await rahatClaim.claims(1);
+        const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
+        const allowanceToVendor1 = await cvaProject1.vendorAllowance(vendor1.address);
+        expect(allowanceToVendor1.toNumber()).to.equal(
+          Number(cvaProjectDetails1.vendorTransferAmount1) -
+            Number(cvaProjectDetails1.beneficiaryClaim1)
+        );
+        expect(beneficiary1Claim.toNumber()).to.equal(0);
         expect(finalClaimsState.isProcessed).to.equal(true);
         expect(finalVendorBalance.toNumber().toString()).to.equal(
           cvaProjectDetails1.beneficiaryClaim1
