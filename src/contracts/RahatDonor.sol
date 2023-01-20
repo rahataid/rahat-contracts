@@ -1,19 +1,24 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
+import '@openzeppelin/contracts/utils/introspection/ERC165.sol';
 import './RahatToken.sol';
 import '../libraries/AbstractTokenActions.sol';
 import '../interfaces/IRahatProject.sol';
+import '../interfaces/IRahatDonor.sol';
 
 /// @title Donor contract to create tokens
 /// @author Rumsan Associates
 /// @notice You can use this contract to manage Rahat tokens and projects
 /// @dev All function calls are only executed by contract owner
-contract RahatDonor is AbstractTokenActions {
+contract RahatDonor is AbstractTokenActions, ERC165 {
   event TokenCreated(address indexed tokenAddress);
 
   /// @notice All the supply is allocated to this contract
   /// @dev deploys AidToken and Rahat contract by sending supply to this contract
+
+  bytes4 public constant IID_RAHAT_DONOR = type(IRahatDonor).interfaceId;
+
   constructor(address _admin) {
     _addOwner(_admin);
   }
@@ -54,6 +59,10 @@ contract RahatDonor is AbstractTokenActions {
 
   function addTokenOwner(address _token, address _ownerAddress) public OnlyOwner {
     RahatToken(_token).addOwner(_ownerAddress);
+  }
+
+  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    return interfaceId == IID_RAHAT_DONOR || super.supportsInterface(interfaceId);
   }
 
   //#endregion

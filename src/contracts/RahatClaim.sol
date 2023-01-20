@@ -52,7 +52,6 @@ contract RahatClaim is IRahatClaim {
     _claim.isProcessed = true;
     emit ClaimProcessed(_claimId);
     return _claim;
-
   }
 
   function findHash(string memory _data) public pure returns (bytes32) {

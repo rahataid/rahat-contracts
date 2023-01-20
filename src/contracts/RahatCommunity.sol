@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/utils/Multicall.sol';
+import '@openzeppelin/contracts/utils/introspection/IERC165.sol';
 import '../interfaces/IRahatClaim.sol';
 import '../interfaces/IRahatProject.sol';
 import '../interfaces/IRahatCommunity.sol';
@@ -24,6 +25,8 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
   mapping(address => bool) public override isProject;
 
   bytes32 public constant VENDOR_ROLE = keccak256('VENDOR');
+  bytes4 public constant IID_RAHAT_PROJECT = type(IRahatProject).interfaceId;
+
   // #endregion
 
   // #region ***** Modifiers *********//
@@ -60,6 +63,10 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
   // #region ***** Project functions *********//
 
   function approveProject(address _projectAddress) public OnlyAdmin {
+    require(
+      IERC165(_projectAddress).supportsInterface(IID_RAHAT_PROJECT),
+      'project interface not supported'
+    );
     if (!isProject[_projectAddress]) emit ProjectApproved(_projectAddress);
     isProject[_projectAddress] = true;
   }

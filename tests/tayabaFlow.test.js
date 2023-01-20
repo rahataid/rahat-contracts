@@ -108,6 +108,14 @@ describe.only('------ Tayaba Flow ------', function () {
       expect(await cvaProject1.name()).to.equal(cvaProjectDetails1.name);
     });
 
+    it('Should not be able to add project_address with unsupported interface', async function () {
+      //TODO check if project is deployed for this community?
+      expect(rahatCommunity1.connect(admin).approveProject(token1.address)).to.be.reverted;
+      expect(rahatCommunity1.connect(admin).approveProject(rahatDonor.address)).to.be.revertedWith(
+        'project interface not supported'
+      );
+    });
+
     it('Should add project to community', async function () {
       //TODO check if project is deployed for this community?
       await rahatCommunity1.connect(admin).approveProject(cvaProject1.address);
@@ -256,6 +264,13 @@ describe.only('------ Tayaba Flow ------', function () {
           .processTokenRequest(beneficiary1.address, otpServerDetails.otp);
         const finalVendorBalance = await token1.balanceOf(vendor1.address);
         const finalClaimsState = await rahatClaim.claims(1);
+        const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
+        const allowanceToVendor1 = await cvaProject1.vendorAllowance(vendor1.address);
+        expect(allowanceToVendor1.toNumber()).to.equal(
+          Number(cvaProjectDetails1.vendorTransferAmount1) -
+            Number(cvaProjectDetails1.beneficiaryClaim1)
+        );
+        expect(beneficiary1Claim.toNumber()).to.equal(0);
         expect(finalClaimsState.isProcessed).to.equal(true);
         expect(finalVendorBalance.toNumber().toString()).to.equal(
           cvaProjectDetails1.beneficiaryClaim1
