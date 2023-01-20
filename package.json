@@ -1,4 +1,9 @@
 {
+  "name": "@rahat-rumsan/contracts",
+  "version": "0.1.100",
+  "description": "Rahat smart contracts",
+  "author": "https://rumsan.com",
+  "homepage": "https://github.com/rahat-rumsan/contracts",
   "scripts": {
     "compile": "hardhat compile",
     "coverage": "hardhat coverage",
