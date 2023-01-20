@@ -108,6 +108,14 @@ describe.only('------ Tayaba Flow ------', function () {
       expect(await cvaProject1.name()).to.equal(cvaProjectDetails1.name);
     });
 
+    it('Should not be able to add project_address with unsupported interface', async function () {
+      //TODO check if project is deployed for this community?
+      expect(rahatCommunity1.connect(admin).approveProject(token1.address)).to.be.reverted;
+      expect(rahatCommunity1.connect(admin).approveProject(rahatDonor.address)).to.be.revertedWith(
+        'project interface not supported'
+      );
+    });
+
     it('Should add project to community', async function () {
       //TODO check if project is deployed for this community?
       await rahatCommunity1.connect(admin).approveProject(cvaProject1.address);
