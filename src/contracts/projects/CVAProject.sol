@@ -62,6 +62,13 @@ contract CVAProject is AbstractProject, ICVAProject {
     _lockProject();
   }
 
+  function lockProjectPermanently() public onlyUnlocked {
+    require(isDonor[msg.sender], 'not a donor');
+    require(tokenBudget(defaultToken) > 0, 'no tokens');
+    if (!_permaLock) _permaLock = true;
+    _lockProject();
+  }
+
   function unlockProject() public onlyLocked {
     require(isDonor[msg.sender], 'not a donor');
     _unlockProject();
@@ -158,9 +165,6 @@ contract CVAProject is AbstractProject, ICVAProject {
     require(otpServerAddress != address(0), 'invalid otp-server');
     require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
     require(vendorAllowance[msg.sender] >= _amount, 'not enough vendor allowance');
-
-    //lock permanently
-    if (!_permaLock) _permaLock = true;
 
     requestId = RahatClaim.createClaim(
       msg.sender,
