@@ -16,6 +16,8 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
 
   event BeneficiaryAdded(address indexed);
   event BeneficiaryRemoved(address indexed);
+  event Received(address, uint);
+
   // #endregion
 
   // #region ***** Variables *********//
@@ -78,6 +80,23 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
 
   function requestProjectApproval(address _projectAddress) public {
     emit ProjectApprovalRequest(tx.origin, _projectAddress);
+  }
+
+  function grantRoleWithEth(bytes32 _role, address _account) public OnlyAdmin {
+    super.grantRole(_role, _account);
+    if (_account.balance < 0.1 ether) {
+      (bool success, ) = _account.call{ value: 0.1 ether }('');
+      require(success, 'Communnity needs more ether.');
+    }
+  }
+
+  receive() external payable {
+    emit Received(msg.sender, msg.value);
+  }
+
+  function withdraw(address payable _to) public payable OnlyAdmin {
+    (bool sent, ) = _to.call{ value: address(this).balance }('');
+    require(sent, 'Failed to send Ether');
   }
   // #endregion
 }

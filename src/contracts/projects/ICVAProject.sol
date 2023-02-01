@@ -42,10 +42,7 @@ interface ICVAProject is IRahatProject {
   ) external returns (uint requestId);
 
   ///@dev Process token request to beneficiary by otp verfication
-  function processTokenRequest(
-    address _benAddress,
-    string memory _otp
-  ) external;
+  function processTokenRequest(address _benAddress, string memory _otp) external;
 
   function updateOtpServer(address _address) external;
 }

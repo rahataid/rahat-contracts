@@ -62,6 +62,10 @@ describe.only('------ Tayaba Flow ------', function () {
     //community
     rahatCommunity1 = await RahatCommunity.deploy(communityName1, admin.address);
     vendorRole = await rahatCommunity1.VENDOR_ROLE();
+    await admin.sendTransaction({
+      to: rahatCommunity1.address,
+      value: ethers.utils.parseEther('1.0'),
+    });
   });
 
   describe('Deployment', function () {
@@ -158,7 +162,7 @@ describe.only('------ Tayaba Flow ------', function () {
   describe('Token Allowance Disbursement to Vendors', function () {
     it('should add vendor to community', async function () {
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(false);
-      await rahatCommunity1.connect(admin).grantRole(vendorRole, vendor1.address);
+      await rahatCommunity1.connect(admin).grantRoleWithEth(vendorRole, vendor1.address);
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(true);
     });
     it('should transfer allowances to vendor1', async function () {
