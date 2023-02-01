@@ -9,6 +9,7 @@ contract CVAProject is AbstractProject, ICVAProject {
   using EnumerableSet for EnumerableSet.AddressSet;
   // #region ***** Events *********//
   event ClaimAssigned(address indexed beneficiary, uint amount);
+  event ClaimAdjusted(address indexed beneficiary, int amount);
   event VendorAllowance(address indexed vendor, uint amount);
   event VendorAllowanceAccept(address indexed vendor, uint amount);
   event OtpServerUpdated(address indexed);
@@ -101,8 +102,11 @@ contract CVAProject is AbstractProject, ICVAProject {
       'not enough tokens'
     );
 
+    uint _origClaimAmt = beneficiaryClaims[_beneficiary];
+
     beneficiaryClaims[_beneficiary] = _amount;
     emit ClaimAssigned(_beneficiary, _amount);
+    emit ClaimAdjusted(_beneficiary, int(_amount - _origClaimAmt));
   }
 
   function totalClaimsAssgined() public view returns (uint _totalClaims) {
