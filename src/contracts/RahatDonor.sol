@@ -13,6 +13,11 @@ import '../interfaces/IRahatDonor.sol';
 /// @dev All function calls are only executed by contract owner
 contract RahatDonor is AbstractTokenActions, ERC165 {
   event TokenCreated(address indexed tokenAddress);
+  event TokenMintedAndApproved(
+    address indexed tokenAddress,
+    address indexed approveAddress,
+    uint256 amount
+  );
 
   /// @notice All the supply is allocated to this contract
   /// @dev deploys AidToken and Rahat contract by sending supply to this contract
@@ -47,6 +52,7 @@ contract RahatDonor is AbstractTokenActions, ERC165 {
     RahatToken token = RahatToken(_token);
     token.mint(address(this), _amount);
     token.approve(_approveAddress, _amount);
+    emit TokenMintedAndApproved(_token, _approveAddress, _amount);
   }
 
   function lockProject(address _address) public OnlyOwner {
