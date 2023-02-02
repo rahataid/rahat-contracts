@@ -106,7 +106,8 @@ contract CVAProject is AbstractProject, ICVAProject {
 
     beneficiaryClaims[_beneficiary] = _amount;
     emit ClaimAssigned(_beneficiary, _amount);
-    emit ClaimAdjusted(_beneficiary, int(_amount - _origClaimAmt));
+    int claimDiff = int(_amount - _origClaimAmt);
+    if (claimDiff != 0) emit ClaimAdjusted(_beneficiary, int(_amount - _origClaimAmt));
   }
 
   function totalClaimsAssgined() public view returns (uint _totalClaims) {
