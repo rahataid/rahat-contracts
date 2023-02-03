@@ -3,4 +3,5 @@ coverage*
 build
 artifacts
 cache
+hardhat_build/
 play/
