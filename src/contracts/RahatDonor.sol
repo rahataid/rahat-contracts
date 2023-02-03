@@ -49,6 +49,10 @@ contract RahatDonor is AbstractTokenActions, ERC165 {
     address _approveAddress,
     uint256 _amount
   ) public OnlyOwner {
+    require(_token != address(0), 'token address cannot be zero');
+    require(_approveAddress != address(0), 'approve address cannot be zero');
+    require(_amount > 0, 'amount cannot be zero');
+
     RahatToken token = RahatToken(_token);
     token.mint(address(this), _amount);
     token.approve(_approveAddress, _amount);
