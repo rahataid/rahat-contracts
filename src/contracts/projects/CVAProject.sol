@@ -186,16 +186,43 @@ contract CVAProject is AbstractProject, ICVAProject {
       tokenRequestIds[msg.sender][_benAddress],
       _otp
     );
-    require(beneficiaryClaims[_claim.claimeeAddress] >= _claim.amount, 'not enough balace');
-    beneficiaryClaims[_claim.claimeeAddress] -= _claim.amount;
-    vendorAllowance[_claim.claimerAddress] -= _claim.amount;
-    IERC20(_claim.tokenAddress).transfer(_claim.claimerAddress, _claim.amount);
+    _transferTokenToClaimer(
+      _claim.tokenAddress,
+      _claim.claimeeAddress,
+      _claim.claimerAddress,
+      _claim.amount
+    );
+  }
+
+  //use this for offline transactions
+  function sendBeneficiaryTokenToVendor(
+    address _benAddress,
+    address _vendorAddress,
+    uint _amount
+  ) public onlyLocked {
+    require(otpServerAddress != msg.sender, 'unauthorized');
+    _transferTokenToClaimer(defaultToken, _benAddress, _vendorAddress, _amount);
+  }
+
+  function _transferTokenToClaimer(
+    address _tokenAddress,
+    address _benAddress,
+    address _vendorAddress,
+    uint _amount
+  ) private {
+    require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balace');
+    beneficiaryClaims[_benAddress] -= _amount;
+    vendorAllowance[_vendorAddress] -= _amount;
+    require(IERC20(_tokenAddress).transfer(_vendorAddress, _amount), 'transfer failed');
   }
 
   // #endregion
 
   // #region ***** Housekeeping *********//
   function updateOtpServer(address _address) public onlyCommunityAdmin {
+    require(_address != address(0), 'invalid address');
+    require(_address != address(this), 'cannot be contract address');
+    require(_address != address(otpServerAddress), 'no change');
     otpServerAddress = _address;
     emit OtpServerUpdated(_address);
   }

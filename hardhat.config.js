@@ -12,14 +12,14 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 50,
+        runs: 200,
       },
     },
   },
   paths: {
     sources: './src/contracts',
     tests: './tests',
-    cache: './cache',
-    artifacts: './artifacts',
+    cache: './hardhat_build/cache',
+    artifacts: './hardhat_build/artifacts',
   },
 };
