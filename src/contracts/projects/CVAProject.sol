@@ -10,6 +10,13 @@ contract CVAProject is AbstractProject, ICVAProject {
   // #region ***** Events *********//
   event ClaimAssigned(address indexed beneficiary, uint amount);
   event ClaimAdjusted(address indexed beneficiary, int amount);
+  event ClaimProcessed(
+    address indexed beneficiary,
+    address indexed vendor,
+    address indexed token,
+    uint amount
+  );
+
   event VendorAllowance(address indexed vendor, uint amount);
   event VendorAllowanceAccept(address indexed vendor, uint amount);
   event OtpServerUpdated(address indexed);
@@ -214,6 +221,7 @@ contract CVAProject is AbstractProject, ICVAProject {
     beneficiaryClaims[_benAddress] -= _amount;
     vendorAllowance[_vendorAddress] -= _amount;
     require(IERC20(_tokenAddress).transfer(_vendorAddress, _amount), 'transfer failed');
+    emit ClaimProcessed(_benAddress, _vendorAddress, _tokenAddress, _amount);
   }
 
   // #endregion
