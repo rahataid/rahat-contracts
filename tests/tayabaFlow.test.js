@@ -1,7 +1,7 @@
 //const { ethers } = require("hardhat");
 //const exceptions = require("./exceptions");
 const { expect } = require('chai');
-const { ethers } = require('hardhat');
+const { ethers,upgrades } = require('hardhat');
 
 describe.only('------ Tayaba Flow ------', function () {
   //Contracts
@@ -60,7 +60,7 @@ describe.only('------ Tayaba Flow ------', function () {
     //rahatRegistry = await RahatRegistry.deploy(admin.address);
     rahatClaim = await RahatClaim.deploy();
     //community
-    rahatCommunity1 = await RahatCommunity.deploy(communityName1, admin.address);
+    rahatCommunity1 = await upgrades.deployProxy( RahatCommunity,[communityName1, admin.address],{kind:"uups",initializer:"initialize"});
     vendorRole = await rahatCommunity1.VENDOR_ROLE();
     await admin.sendTransaction({
       to: rahatCommunity1.address,

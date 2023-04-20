@@ -5,6 +5,7 @@
 require('solidity-coverage');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-waffle');
+require("@openzeppelin/hardhat-upgrades");
 
 module.exports = {
   solidity: {

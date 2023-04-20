@@ -74,7 +74,7 @@ contract RahatCommunity is Initializable, UUPSUpgradeable, IRahatCommunity, Acce
 
   function approveProject(address _projectAddress) public OnlyAdmin {
     require(
-      IERC165(_projectAddress).supportsInterface(IID_RAHAT_PROJECT),
+      IERC165Upgradeable(_projectAddress).supportsInterface(IID_RAHAT_PROJECT),
       'project interface not supported'
     );
     if (!isProject[_projectAddress]) emit ProjectApproved(_projectAddress);
