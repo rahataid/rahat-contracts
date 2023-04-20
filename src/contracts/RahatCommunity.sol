@@ -1,14 +1,15 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts/utils/Multicall.sol';
-import '@openzeppelin/contracts/utils/introspection/IERC165.sol';
+import '@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '../interfaces/IRahatClaim.sol';
 import '../interfaces/IRahatProject.sol';
 import '../interfaces/IRahatCommunity.sol';
 
-contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
+contract RahatCommunity is Initializable, UUPSUpgradeable, IRahatCommunity, AccessControlUpgradeable, Multicall {
   // #region ***** Events *********//
   event ProjectApprovalRequest(address indexed requestor, address indexed project);
   event ProjectApproved(address indexed);
@@ -39,11 +40,18 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
 
   // #endregion
 
-  constructor(string memory _name, address _admin) {
+  function initialize(string memory _name, address _admin) public initializer {
+    __AccessControl_init();
     _grantRole(DEFAULT_ADMIN_ROLE, _admin);
     _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
     name = _name;
   }
+
+  // constructor(string memory _name, address _admin) {
+  //   _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+  //   _setRoleAdmin(VENDOR_ROLE, DEFAULT_ADMIN_ROLE);
+  //   name = _name;
+  // }
 
   // #region ***** Role functions *********//
   function isAdmin(address _address) public view returns (bool) {
@@ -98,5 +106,8 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
     (bool sent, ) = _to.call{ value: address(this).balance }('');
     require(sent, 'Failed to send Ether');
   }
+
+  function _authorizeUpgrade(address) internal override OnlyAdmin {}
+
   // #endregion
 }

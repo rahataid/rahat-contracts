@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity ^0.8.17;
 
-import '@openzeppelin/contracts/access/IAccessControl.sol';
+import '@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol';
 
-interface IRahatCommunity is IAccessControl {
+interface IRahatCommunity is IAccessControlUpgradeable {
   function isBeneficiary(address _address) external view returns (bool);
 
   function isProject(address _address) external view returns (bool);
