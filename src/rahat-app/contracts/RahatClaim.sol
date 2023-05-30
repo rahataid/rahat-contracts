@@ -9,6 +9,7 @@ contract RahatClaim is IRahatClaim, Multicall {
     address indexed claimer,
     address indexed claimee,
     address token,
+    address otpServer,
     uint256 amount
   );
   event OtpAddedToClaim(uint256 indexed claimId);
@@ -36,7 +37,14 @@ contract RahatClaim is IRahatClaim, Multicall {
       otpHash: bytes32(0),
       isProcessed: false
     });
-    emit ClaimCreated(claimId, _claimerAddress, _claimeeAddress, _tokenAddress, _amount);
+    emit ClaimCreated(
+      claimId,
+      _claimerAddress,
+      _claimeeAddress,
+      _tokenAddress,
+      _otpServerAddress,
+      _amount
+    );
   }
 
   function addOtpToClaim(uint256 _claimId, bytes32 _otpHash, uint256 _expiryDate) public {
