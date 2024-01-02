@@ -181,6 +181,7 @@ describe.only('------ Tayaba Flow ------', function () {
     it('should add vendor to community', async function () {
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(false);
       await rahatCommunity1.connect(admin).grantRoleWithEth(vendorRole, vendor1.address);
+      await rahatCommunity1.connect(admin).grantRoleWithEth(vendorRole, vendor2.address);
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(true);
     });
     it('should transfer allowances to vendor1', async function () {
@@ -200,6 +201,17 @@ describe.only('------ Tayaba Flow ------', function () {
       const allowanceToVendor1 = await cvaProject1.vendorAllowance(vendor1.address);
       expect(allowanceToVendor1.toNumber().toString()).to.equal(
         cvaProjectDetails1.vendorTransferAmount1
+      );
+    });
+
+    it('should transfer allowances to vendor2', async function () {
+      await cvaProject1
+        .connect(admin)
+        .sendAllowanceToVendor(vendor2.address, cvaProjectDetails1.vendorTransferAmount2);
+      const allowanceToVendor2 = await cvaProject1.vendorAllowance(vendor2.address);
+      console.log({allowanceToVendor2})
+      expect(allowanceToVendor2.toNumber().toString()).to.equal(
+        cvaProjectDetails1.vendorTransferAmount2
       );
     });
   });
