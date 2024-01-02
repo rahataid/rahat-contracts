@@ -158,6 +158,18 @@ contract CVAProject is AbstractProject, ICVAProject {
     require(tokenBudget(defaultToken) >= totalVendorAllocation, 'not enough available allocation');
     emit VendorAllowanceAccept(msg.sender, _amount);
   }
+ // #Directly transfer allowance to vendor
+  function sendAllowanceToVendor(
+    address _address,
+    uint _amount
+  ) public onlyUnlocked onlyCommunityAdmin {
+    require(RahatCommunity.hasRole(VENDOR_ROLE, _address), 'Not a Vendor');
+    vendorAllowance[_address] += _amount;
+    totalVendorAllocation += _amount;
+    require(tokenBudget(defaultToken) >= totalVendorAllocation, 'not enough available allocation');
+    emit VendorAllowance(_address, _amount);
+    emit VendorAllowanceAccept(msg.sender, _amount);
+  }
 
   // #endregion
 
