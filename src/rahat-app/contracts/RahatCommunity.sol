@@ -84,8 +84,8 @@ contract RahatCommunity is IRahatCommunity, AccessControl, Multicall {
 
   function grantRoleWithEth(bytes32 _role, address _account) public OnlyAdmin {
     super.grantRole(_role, _account);
-    if (_account.balance < 0.03 ether) {
-      (bool success, ) = _account.call{ value: 0.05 ether }('');
+    if (_account.balance < 0.0003 ether) {
+      (bool success, ) = _account.call{ value: 0.0001 ether }('');
       require(success, 'Communnity needs more ether.');
     }
   }

@@ -3,6 +3,24 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
+const generateMultiCallData = (
+    contract,
+    functionName,
+    callData
+  ) => {
+    let encodedData = [];
+    console.log({callData})
+    if (callData) {
+      for (const callD of callData) {
+        const encodedD = contract.interface.encodeFunctionData(functionName, [
+          ...callD,
+        ]);
+        encodedData.push(encodedD);
+      }
+    }
+    return encodedData;
+  }
+
 describe.only('------ Tayaba Flow ------', function () {
   //Contracts
   let rahatDonor;
@@ -266,6 +284,7 @@ describe.only('------ Tayaba Flow ------', function () {
         expect(finalClaimsState.expiryDate.toNumber()).to.equal(expiryDate);
         expect(finalClaimsState.otpHash).to.equal(otpHash);
       }),
+
       it('should process the token charge request', async function () {
         const initialVendorBalance = await token1.balanceOf(vendor1.address);
         expect(initialVendorBalance.toNumber()).to.equal(0);
@@ -287,6 +306,38 @@ describe.only('------ Tayaba Flow ------', function () {
         expect(finalVendorBalance.toNumber().toString()).to.equal(
           cvaProjectDetails1.beneficiaryClaim1
         );
+      });
+
+      it('should be able to send beneficiary tokens to vendor upon offline transaction', async function () {  
+        const initialVendorBalance = await token1.balanceOf(vendor1.address);
+        const initialClaimState = await rahatClaim.claims(1);
+        await cvaProject1
+          .connect(admin)
+          .sendBeneficiaryTokenToVendor(beneficiary2.address, vendor1.address,cvaProjectDetails1.beneficiaryClaim2 );
+        const finalVendorBalance = await token1.balanceOf(vendor1.address);
+        const finalClaimsState = await rahatClaim.claims(1);
+        const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
+         expect(beneficiary1Claim.toNumber()).to.equal(0);
+        expect(finalClaimsState.isProcessed).to.equal(true);
+         expect(finalVendorBalance.toNumber()).to.equal(
+          +initialVendorBalance + +cvaProjectDetails1.beneficiaryClaim1
+        );
+      })
+
+      it("bulk claim process", async function(){
+        const multicallData = generateMultiCallData(
+          cvaProject1,
+          "sendBeneficiaryTokenToVendor",
+          [
+            [beneficiary1.address,vendor1.address,cvaProjectDetails1.beneficiaryClaim1],
+            [beneficiary1.address,vendor1.address,cvaProjectDetails1.beneficiaryClaim1]
+          ]
+
+        );
+
+        console.log(multicallData)
+
+
       });
   });
 });
