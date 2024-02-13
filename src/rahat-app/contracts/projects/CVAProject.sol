@@ -195,7 +195,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     require(vendorAllowance[msg.sender] >= _amount, 'not enough vendor allowance');
 
     requestId = RahatClaim.createClaim(
-      msg.sender,
+      _msgSender(),
       _benAddress,
       _otpServerAddress,
       defaultToken,
@@ -206,7 +206,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
 
   function processTokenRequest(address _benAddress, string memory _otp) public onlyLocked {
     IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
-      tokenRequestIds[msg.sender][_benAddress],
+      tokenRequestIds[_msgSender()][_benAddress],
       _otp
     );
     _transferTokenToClaimer(
