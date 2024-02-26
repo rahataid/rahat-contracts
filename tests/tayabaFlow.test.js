@@ -268,24 +268,6 @@ describe.only('------ Tayaba Flow ------', function () {
   });
 
   describe('Vendor to Beneficiary Charge Process', function () {
-    // it('should charge tokens to beneficairy', async function () {
-    //   const tx = await cvaProject1
-    //     .connect(vendor1)
-    //     ['requestTokenFromBeneficiary(address,uint256,address)'](
-    //       beneficiary1.address,
-    //       cvaProjectDetails1.beneficiaryClaim1,
-    //       otpServer1.address
-    //     );
-    //   const receipt = await tx.wait();
-    //   console.log(receipt)
-    //   // const event = receipt.events[0];
-    //   // const decodedEventArgs = rahatClaim.interface.decodeEventLog(
-    //   //   'ClaimCreated',
-    //   //   event.data,
-    //   //   event.topics
-    //   // );
-    //   // expect(decodedEventArgs.claimId).to.equal(1n);
-    // });
 
 
     it('should charge tokens to beneficairy', async function () {
