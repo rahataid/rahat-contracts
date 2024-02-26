@@ -3,6 +3,24 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
+const generateMultiCallData = (
+    contract,
+    functionName,
+    callData
+  ) => {
+    let encodedData = [];
+    console.log({callData})
+    if (callData) {
+      for (const callD of callData) {
+        const encodedD = contract.interface.encodeFunctionData(functionName, [
+          ...callD,
+        ]);
+        encodedData.push(encodedD);
+      }
+    }
+    return encodedData;
+  }
+
 describe.only('------ Tayaba Flow ------', function () {
   //Contracts
   let rahatDonor;
@@ -163,6 +181,7 @@ describe.only('------ Tayaba Flow ------', function () {
     it('should add vendor to community', async function () {
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(false);
       await rahatCommunity1.connect(admin).grantRoleWithEth(vendorRole, vendor1.address);
+      await rahatCommunity1.connect(admin).grantRoleWithEth(vendorRole, vendor2.address);
       expect(await rahatCommunity1.hasRole(vendorRole, vendor1.address)).to.equal(true);
     });
     it('should transfer allowances to vendor1', async function () {
@@ -182,6 +201,17 @@ describe.only('------ Tayaba Flow ------', function () {
       const allowanceToVendor1 = await cvaProject1.vendorAllowance(vendor1.address);
       expect(allowanceToVendor1.toNumber().toString()).to.equal(
         cvaProjectDetails1.vendorTransferAmount1
+      );
+    });
+
+    it('should transfer allowances to vendor2', async function () {
+      await cvaProject1
+        .connect(admin)
+        .sendAllowanceToVendor(vendor2.address, cvaProjectDetails1.vendorTransferAmount2);
+      const allowanceToVendor2 = await cvaProject1.vendorAllowance(vendor2.address);
+      console.log({allowanceToVendor2})
+      expect(allowanceToVendor2.toNumber().toString()).to.equal(
+        cvaProjectDetails1.vendorTransferAmount2
       );
     });
   });
@@ -266,6 +296,7 @@ describe.only('------ Tayaba Flow ------', function () {
         expect(finalClaimsState.expiryDate.toNumber()).to.equal(expiryDate);
         expect(finalClaimsState.otpHash).to.equal(otpHash);
       }),
+
       it('should process the token charge request', async function () {
         const initialVendorBalance = await token1.balanceOf(vendor1.address);
         expect(initialVendorBalance.toNumber()).to.equal(0);
@@ -287,6 +318,38 @@ describe.only('------ Tayaba Flow ------', function () {
         expect(finalVendorBalance.toNumber().toString()).to.equal(
           cvaProjectDetails1.beneficiaryClaim1
         );
+      });
+
+      it('should be able to send beneficiary tokens to vendor upon offline transaction', async function () {  
+        const initialVendorBalance = await token1.balanceOf(vendor1.address);
+        const initialClaimState = await rahatClaim.claims(1);
+        await cvaProject1
+          .connect(admin)
+          .sendBeneficiaryTokenToVendor(beneficiary2.address, vendor1.address,cvaProjectDetails1.beneficiaryClaim2 );
+        const finalVendorBalance = await token1.balanceOf(vendor1.address);
+        const finalClaimsState = await rahatClaim.claims(1);
+        const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
+         expect(beneficiary1Claim.toNumber()).to.equal(0);
+        expect(finalClaimsState.isProcessed).to.equal(true);
+         expect(finalVendorBalance.toNumber()).to.equal(
+          +initialVendorBalance + +cvaProjectDetails1.beneficiaryClaim1
+        );
+      })
+
+      it("bulk claim process", async function(){
+        const multicallData = generateMultiCallData(
+          cvaProject1,
+          "sendBeneficiaryTokenToVendor",
+          [
+            [beneficiary1.address,vendor1.address,cvaProjectDetails1.beneficiaryClaim1],
+            [beneficiary1.address,vendor1.address,cvaProjectDetails1.beneficiaryClaim1]
+          ]
+
+        );
+
+        console.log(multicallData)
+
+
       });
   });
 });
