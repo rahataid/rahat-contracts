@@ -1,14 +1,13 @@
 //SPDX-License-Identifier: LGPL-3.0
-pragma solidity ^0.8.17;
+pragma solidity 0.8.20;
 
 //ERC20 Tokens
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 
 import '../interfaces/IRahatToken.sol';
 import '../libraries/AbstractOwner.sol';
 
-contract RahatToken is AbstractOwner, ERC20, ERC20Snapshot, ERC20Burnable, IRahatToken {
+contract RahatToken is AbstractOwner, ERC20, ERC20Burnable, IRahatToken {
   uint8 private decimalPoints;
 
   constructor(
@@ -34,11 +33,11 @@ contract RahatToken is AbstractOwner, ERC20, ERC20Snapshot, ERC20Burnable, IRaha
     return _amount;
   }
 
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal override(ERC20, ERC20Snapshot) {
-    super._beforeTokenTransfer(from, to, amount);
-  }
+  // function _beforeTokenTransfer(
+  //   address from,
+  //   address to,
+  //   uint256 amount
+  // ) internal override(ERC20, ERC20Snapshot) {
+  //   super._beforeTokenTransfer(from, to, amount);
+  // }
 }
