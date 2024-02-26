@@ -192,7 +192,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   ) public onlyLocked returns (uint requestId) {
     require(otpServerAddress != address(0), 'invalid otp-server');
     require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
-    require(vendorAllowance[msg.sender] >= _amount, 'not enough vendor allowance');
+    require(vendorAllowance[_msgSender()] >= _amount, 'not enough vendor allowance');
 
     requestId = RahatClaim.createClaim(
       _msgSender(),
@@ -201,7 +201,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
       defaultToken,
       _amount
     );
-    tokenRequestIds[msg.sender][_benAddress] = requestId;
+    tokenRequestIds[_msgSender()][_benAddress] = requestId;
   }
 
   function processTokenRequest(address _benAddress, string memory _otp) public onlyLocked {
