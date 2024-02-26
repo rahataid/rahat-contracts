@@ -48,7 +48,6 @@ async function buildTypedData(forwarderContract) {
 }
 
 async function signMetaTxRequest(signer, forwarderContract, input) {
-  console.log({signer, forwarderContract, input})
   const request = await buildRequest(forwarderContract, input)
   const { domain, types } = await buildTypedData(forwarderContract)
   const signature = await signer.signTypedData(domain, types, request);
