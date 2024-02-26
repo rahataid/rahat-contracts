@@ -1,11 +1,14 @@
 //SPDX-License-Identifier: LGPL-3.0
-pragma solidity ^0.8.17;
+pragma solidity 0.8.20;
 
+
+import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import "@openzeppelin/contracts/metatx/ERC2771Forwarder.sol";
 import './ICVAProject.sol';
 import '../../libraries/AbstractProject.sol';
 import '../../interfaces/IRahatClaim.sol';
 
-contract CVAProject is AbstractProject, ICVAProject {
+contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   using EnumerableSet for EnumerableSet.AddressSet;
   // #region ***** Events *********//
   event ClaimAssigned(address indexed beneficiary, uint amount);
@@ -55,8 +58,9 @@ contract CVAProject is AbstractProject, ICVAProject {
     address _defaultToken,
     address _rahatClaim,
     address _otpServerAddress,
-    address _community
-  ) AbstractProject(_name, _community) {
+    address _community,
+    address _forwarder
+  ) AbstractProject(_name, _community) ERC2771Context(address(_forwarder)) {
     defaultToken = _defaultToken;
     RahatClaim = IRahatClaim(_rahatClaim);
     otpServerAddress = _otpServerAddress;
@@ -191,7 +195,7 @@ contract CVAProject is AbstractProject, ICVAProject {
     require(vendorAllowance[msg.sender] >= _amount, 'not enough vendor allowance');
 
     requestId = RahatClaim.createClaim(
-      msg.sender,
+      _msgSender(),
       _benAddress,
       _otpServerAddress,
       defaultToken,
@@ -202,7 +206,7 @@ contract CVAProject is AbstractProject, ICVAProject {
 
   function processTokenRequest(address _benAddress, string memory _otp) public onlyLocked {
     IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
-      tokenRequestIds[msg.sender][_benAddress],
+      tokenRequestIds[_msgSender()][_benAddress],
       _otp
     );
     _transferTokenToClaimer(
@@ -219,8 +223,40 @@ contract CVAProject is AbstractProject, ICVAProject {
     address _vendorAddress,
     uint _amount
   ) public onlyLocked {
-    require(otpServerAddress != msg.sender, 'unauthorized');
+    require(otpServerAddress == msg.sender, 'unauthorized');
     _transferTokenToClaimer(defaultToken, _benAddress, _vendorAddress, _amount);
+  }
+
+  //Patchwork for vendor transaction
+  function initiateTokenRequestForVendor(
+    address _vendorAddress,
+    address _benAddress,
+    uint _amount
+    ) public returns(uint requestId){
+    require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
+    require(vendorAllowance[_vendorAddress] >= _amount, 'not enough vendor allowance');
+
+    requestId = RahatClaim.createClaim(
+      _vendorAddress,
+      _benAddress,
+      otpServerAddress,
+      defaultToken,
+      _amount
+    );
+    tokenRequestIds[_vendorAddress][_benAddress] = requestId;
+  }
+
+  function processTokenRequestForVendor(address _vendorAddress,address _benAddress, string memory _otp) public {
+    IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
+      tokenRequestIds[_vendorAddress][_benAddress],
+      _otp
+    );
+    _transferTokenToClaimer(
+      _claim.tokenAddress,
+      _claim.claimeeAddress,
+      _claim.claimerAddress,
+      _claim.amount
+    );
   }
 
   function _transferTokenToClaimer(
@@ -252,4 +288,35 @@ contract CVAProject is AbstractProject, ICVAProject {
   function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
     return interfaceId == IID_RAHAT_PROJECT;
   }
+
+     ///region overrides
+
+    /// @dev overriding the method to ERC2771Context
+    function _msgSender()
+        internal
+        view
+        override(Context, ERC2771Context)
+        returns (address sender)
+    {
+        sender = ERC2771Context._msgSender();
+    }
+
+    /// @dev overriding the method to ERC2771Context
+    function _msgData()
+        internal
+        view
+        override(Context, ERC2771Context)
+        returns (bytes calldata)
+    {
+        return ERC2771Context._msgData();
+    }
+
+    function _contextSuffixLength()
+        internal
+        view
+        override(Context, ERC2771Context)
+        returns (uint256)
+    {
+        return ERC2771Context._contextSuffixLength();
+    }
 }
