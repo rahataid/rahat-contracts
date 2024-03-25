@@ -7,7 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '../interfaces/IRahatToken.sol';
 import '../libraries/AbstractOwner.sol';
 
-contract RahatToken is AbstractOwner, ERC20, ERC20Burnable, IRahatToken {
+contract RahatToken is AbstractOwner, ERC20Burnable, IRahatToken {
   uint8 private decimalPoints;
 
   constructor(

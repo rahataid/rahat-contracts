@@ -2,37 +2,26 @@
 //const exceptions = require("./exceptions");
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const {signMetaTxRequest} = require('../utils');
+const { signMetaTxRequest } = require('../utils');
 
-const generateMultiCallData = (
-    contract,
-    functionName,
-    callData
-  ) => {
-    let encodedData = [];
-    console.log({callData})
-    if (callData) {
-      for (const callD of callData) {
-        const encodedD = contract.interface.encodeFunctionData(functionName, [
-          ...callD,
-        ]);
-        encodedData.push(encodedD);
-      }
+const generateMultiCallData = (contract, functionName, callData) => {
+  let encodedData = [];
+  console.log({ callData });
+  if (callData) {
+    for (const callD of callData) {
+      const encodedD = contract.interface.encodeFunctionData(functionName, [...callD]);
+      encodedData.push(encodedD);
     }
-    return encodedData;
   }
+  return encodedData;
+};
 
-  async function getMetaTxRequest(signer, forwarderContract, storageContract, functionName, params) {
-  return signMetaTxRequest(
-    signer,
-    forwarderContract,
-    {
-      from: signer.address,
-      to: storageContract.target,
-      data: storageContract.interface.encodeFunctionData(functionName, params),
-    },
-  )
-
+async function getMetaTxRequest(signer, forwarderContract, storageContract, functionName, params) {
+  return signMetaTxRequest(signer, forwarderContract, {
+    from: signer.address,
+    to: storageContract.target,
+    data: storageContract.interface.encodeFunctionData(functionName, params),
+  });
 }
 
 describe.only('------ Tayaba Flow ------', function () {
@@ -142,7 +131,7 @@ describe.only('------ Tayaba Flow ------', function () {
         await rahatClaim.getAddress(),
         otpServer1.address,
         await rahatCommunity1.getAddress(),
-       await forwarderContract.getAddress()
+        await forwarderContract.getAddress()
       );
       expect(await cvaProject1.defaultToken()).to.equal(await token1.getAddress());
       expect(await cvaProject1.name()).to.equal(cvaProjectDetails1.name);
@@ -150,7 +139,8 @@ describe.only('------ Tayaba Flow ------', function () {
 
     it('Should not be able to add project_address with unsupported interface', async function () {
       //TODO check if project is deployed for this community?
-      expect(rahatCommunity1.connect(admin).approveProject(await token1.getAddress())).to.be.reverted;
+      expect(rahatCommunity1.connect(admin).approveProject(await token1.getAddress())).to.be
+        .reverted;
       expect(rahatCommunity1.connect(admin).approveProject(rahatDonor.target)).to.be.revertedWith(
         'project interface not supported'
       );
@@ -167,19 +157,24 @@ describe.only('------ Tayaba Flow ------', function () {
     it('should send fund to project', async function () {
       await rahatDonor
         .connect(donor)
-        .mintTokenAndApprove(await token1.getAddress(), await cvaProject1.getAddress(), cvaProjectDetails1.approveAmount);
+        .mintTokenAndApprove(
+          await token1.getAddress(),
+          await cvaProject1.getAddress(),
+          cvaProjectDetails1.approveAmount
+        );
       const allowanceTocvaProject_1 = await token1.allowance(
         rahatDonor.target,
         await cvaProject1.getAddress()
       );
 
-      expect(allowanceTocvaProject_1.toString()).to.equal(
-        cvaProjectDetails1.approveAmount
-      );
+      expect(allowanceTocvaProject_1.toString()).to.equal(cvaProjectDetails1.approveAmount);
     });
 
     it('should accept fund from donor and get the tokens', async function () {
-      const allowanceToProject = await token1.allowance(rahatDonor.target, await cvaProject1.getAddress());
+      const allowanceToProject = await token1.allowance(
+        rahatDonor.target,
+        await cvaProject1.getAddress()
+      );
       expect(allowanceToProject.toString()).to.equal(cvaProjectDetails1.approveAmount);
       await cvaProject1
         .connect(admin)
@@ -217,9 +212,7 @@ describe.only('------ Tayaba Flow ------', function () {
         .connect(vendor1)
         .acceptAllowanceByVendor(cvaProjectDetails1.vendorTransferAmount1);
       const allowanceToVendor1 = await cvaProject1.vendorAllowance(vendor1.address);
-      expect(allowanceToVendor1.toString()).to.equal(
-        cvaProjectDetails1.vendorTransferAmount1
-      );
+      expect(allowanceToVendor1.toString()).to.equal(cvaProjectDetails1.vendorTransferAmount1);
     });
 
     it('should transfer allowances to vendor2', async function () {
@@ -227,10 +220,8 @@ describe.only('------ Tayaba Flow ------', function () {
         .connect(admin)
         .sendAllowanceToVendor(vendor2.address, cvaProjectDetails1.vendorTransferAmount2);
       const allowanceToVendor2 = await cvaProject1.vendorAllowance(vendor2.address);
-      console.log({allowanceToVendor2})
-      expect(allowanceToVendor2.toString()).to.equal(
-        cvaProjectDetails1.vendorTransferAmount2
-      );
+      console.log({ allowanceToVendor2 });
+      expect(allowanceToVendor2.toString()).to.equal(cvaProjectDetails1.vendorTransferAmount2);
     });
   });
 
@@ -254,9 +245,7 @@ describe.only('------ Tayaba Flow ------', function () {
 
       const beneficiary1_claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
       const beneficiary1_count = await cvaProject1.beneficiaryCount();
-      expect(beneficiary1_claim.toString()).to.equal(
-        cvaProjectDetails1.beneficiaryClaim1
-      );
+      expect(beneficiary1_claim.toString()).to.equal(cvaProjectDetails1.beneficiaryClaim1);
       expect(beneficiary1_count).to.equal(2n);
     });
 
@@ -268,24 +257,21 @@ describe.only('------ Tayaba Flow ------', function () {
   });
 
   describe('Vendor to Beneficiary Charge Process', function () {
-
-
     it('should charge tokens to beneficairy', async function () {
-
       const request = await getMetaTxRequest(
-          vendor1,
-         forwarderContract, 
-         cvaProject1, 
-         'requestTokenFromBeneficiary(address,uint256)', 
-         [beneficiary1.address,cvaProjectDetails1.beneficiaryClaim1])
+        vendor1,
+        forwarderContract,
+        cvaProject1,
+        'requestTokenFromBeneficiary(address,uint256)',
+        [beneficiary1.address, cvaProjectDetails1.beneficiaryClaim1]
+      );
 
-
-      console.log({request})
+      console.log({ request });
 
       const tx = await forwarderContract.connect(deployer).execute(request);
 
       const receipt = await tx.wait();
-      console.log(receipt)
+      console.log(receipt);
     });
 
     it('should not be able to approve vendor request by random wallet', async function () {
@@ -316,26 +302,26 @@ describe.only('------ Tayaba Flow ------', function () {
         expect(finalClaimsState.expiryDate).to.equal(BigInt(expiryDate));
         expect(finalClaimsState.otpHash).to.equal(otpHash);
       }),
-
       it('should process the token charge request', async function () {
         const initialVendorBalance = await token1.balanceOf(vendor1.address);
         expect(initialVendorBalance).to.equal(0n);
         const initialClaimState = await rahatClaim.claims(1);
         expect(initialClaimState.isProcessed).to.equal(false);
 
-         const request = await getMetaTxRequest(vendor1,
-         forwarderContract, 
-         cvaProject1, 
-         'processTokenRequest', 
-         [beneficiary1.address,otpServerDetails.otp])
+        const request = await getMetaTxRequest(
+          vendor1,
+          forwarderContract,
+          cvaProject1,
+          'processTokenRequest',
+          [beneficiary1.address, otpServerDetails.otp]
+        );
 
+        console.log({ request });
 
-      console.log({request  })
+        const tx = await forwarderContract.execute(request);
 
-      const tx = await forwarderContract.execute(request);
-
-          const receipt = await tx.wait();
-          console.log(receipt)
+        const receipt = await tx.wait();
+        console.log(receipt);
         const finalVendorBalance = await token1.balanceOf(vendor1.address);
         const finalClaimsState = await rahatClaim.claims(1);
         const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
@@ -346,41 +332,36 @@ describe.only('------ Tayaba Flow ------', function () {
         );
         expect(beneficiary1Claim).to.equal(0n);
         expect(finalClaimsState.isProcessed).to.equal(true);
-        expect(finalVendorBalance).to.equal(
-          BigInt(cvaProjectDetails1.beneficiaryClaim1)
-        );
+        expect(finalVendorBalance).to.equal(BigInt(cvaProjectDetails1.beneficiaryClaim1));
       });
 
-      it('should be able to send beneficiary tokens to vendor upon offline transaction', async function () {  
-        const initialVendorBalance = await token1.balanceOf(vendor1.address);
-        const initialClaimState = await rahatClaim.claims(1);
-        await cvaProject1
-          .connect(otpServer1)
-          .sendBeneficiaryTokenToVendor(beneficiary2.address, vendor1.address,cvaProjectDetails1.beneficiaryClaim2 );
-        const finalVendorBalance = await token1.balanceOf(vendor1.address);
-        const finalClaimsState = await rahatClaim.claims(1);
-        const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
-         expect(beneficiary1Claim).to.equal(0n);
-        expect(finalClaimsState.isProcessed).to.equal(true);
-         expect(finalVendorBalance).to.equal(
-          initialVendorBalance + BigInt(cvaProjectDetails1.beneficiaryClaim1)
+    it('should be able to send beneficiary tokens to vendor upon offline transaction', async function () {
+      const initialVendorBalance = await token1.balanceOf(vendor1.address);
+      const initialClaimState = await rahatClaim.claims(1);
+      await cvaProject1
+        .connect(otpServer1)
+        .sendBeneficiaryTokenToVendor(
+          beneficiary2.address,
+          vendor1.address,
+          cvaProjectDetails1.beneficiaryClaim2
         );
-      })
+      const finalVendorBalance = await token1.balanceOf(vendor1.address);
+      const finalClaimsState = await rahatClaim.claims(1);
+      const beneficiary1Claim = await cvaProject1.beneficiaryClaims(beneficiary1.address);
+      expect(beneficiary1Claim).to.equal(0n);
+      expect(finalClaimsState.isProcessed).to.equal(true);
+      expect(finalVendorBalance).to.equal(
+        initialVendorBalance + BigInt(cvaProjectDetails1.beneficiaryClaim1)
+      );
+    });
 
-      it("bulk claim process", async function(){
-        const multicallData = generateMultiCallData(
-          cvaProject1,
-          "sendBeneficiaryTokenToVendor",
-          [
-            [beneficiary1.address,vendor1.address,cvaProjectDetails1.beneficiaryClaim1],
-            [beneficiary1.address,vendor1.address,cvaProjectDetails1.beneficiaryClaim1]
-          ]
+    it('bulk claim process', async function () {
+      const multicallData = generateMultiCallData(cvaProject1, 'sendBeneficiaryTokenToVendor', [
+        [beneficiary1.address, vendor1.address, cvaProjectDetails1.beneficiaryClaim1],
+        [beneficiary1.address, vendor1.address, cvaProjectDetails1.beneficiaryClaim1],
+      ]);
 
-        );
-
-        console.log(multicallData)
-
-
-      });
+      console.log(multicallData);
+    });
   });
 });
