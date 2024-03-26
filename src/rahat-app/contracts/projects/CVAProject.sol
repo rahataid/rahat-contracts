@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: LGPL-3.0
 pragma solidity 0.8.20;
 
-
-import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import "@openzeppelin/contracts/metatx/ERC2771Forwarder.sol";
+import '@openzeppelin/contracts/metatx/ERC2771Context.sol';
+import '@openzeppelin/contracts/metatx/ERC2771Forwarder.sol';
 import './ICVAProject.sol';
 import '../../libraries/AbstractProject.sol';
 import '../../interfaces/IRahatClaim.sol';
@@ -67,42 +66,18 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     RahatCommunity.requestProjectApproval(address(this));
   }
 
-  // #region ***** Project Functions *********//
-  function lockProject() public onlyUnlocked {
-    require(isDonor[msg.sender], 'not a donor');
-    require(tokenBudget(defaultToken) > 0, 'no tokens');
-    _lockProject();
-  }
-
-  function lockProjectPermanently() public onlyUnlocked {
-    require(isDonor[msg.sender], 'not a donor');
-    require(tokenBudget(defaultToken) > 0, 'no tokens');
-    if (!_permaLock) _permaLock = true;
-    _lockProject();
-  }
-
-  function unlockProject() public onlyLocked {
-    require(isDonor[msg.sender], 'not a donor');
-    _unlockProject();
-  }
-
-  // #endregion
-
   // #region ***** Beneficiary Function *********//
 
-  function addBeneficiary(address _address) public onlyUnlocked onlyCommunityAdmin {
+  function addBeneficiary(address _address) public onlyCommunityAdmin {
     _addBeneficiary(_address);
   }
 
-  function assignClaims(
-    address _address,
-    uint _claimAmount
-  ) public onlyUnlocked onlyCommunityAdmin {
+  function assignClaims(address _address, uint _claimAmount) public onlyCommunityAdmin {
     _addBeneficiary(_address);
     _assignClaims(_address, _claimAmount);
   }
 
-  function removeBeneficiary(address _address) public onlyUnlocked onlyCommunityAdmin {
+  function removeBeneficiary(address _address) public onlyCommunityAdmin {
     _removeBeneficiary(_address);
     _assignClaims(_address, 0);
   }
@@ -121,6 +96,10 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     if (claimDiff != 0) emit ClaimAdjusted(_beneficiary, int(_amount - _origClaimAmt));
   }
 
+  function get() public view returns (uint256) {
+    return _beneficiaries.length();
+  }
+
   function totalClaimsAssgined() public view returns (uint _totalClaims) {
     for (uint i = 0; i < _beneficiaries.length(); i++) {
       _totalClaims += beneficiaryClaims[_beneficiaries.at(i)];
@@ -130,12 +109,12 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   // #endregion
 
   // #region ***** Token Functions *********//
-  function acceptToken(address _from, uint256 _amount) public onlyUnlocked onlyCommunityAdmin {
+  function acceptToken(address _from, uint256 _amount) public onlyCommunityAdmin {
     isDonor[_from] = true;
     _acceptToken(defaultToken, _from, _amount);
   }
 
-  function withdrawToken(address _token) public onlyLocked onlyCommunityAdmin {
+  function withdrawToken(address _token) public onlyCommunityAdmin {
     uint _surplus = IERC20(_token).balanceOf(address(this));
     _withdrawToken(_token, _surplus);
   }
@@ -143,17 +122,14 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   // #endregion
 
   // #region ***** Vendor Allowance *********//
-  function createAllowanceToVendor(
-    address _address,
-    uint256 _amount
-  ) public onlyUnlocked onlyCommunityAdmin {
+  function createAllowanceToVendor(address _address, uint256 _amount) public onlyCommunityAdmin {
     require(RahatCommunity.hasRole(VENDOR_ROLE, _address), 'Not a Vendor');
     require(tokenBudget(defaultToken) >= _amount, 'not enough balance');
     vendorAllowancePending[_address] = _amount;
     emit VendorAllowance(_address, _amount);
   }
 
-  function acceptAllowanceByVendor(uint256 _amount) public onlyUnlocked {
+  function acceptAllowanceByVendor(uint256 _amount) public {
     require(RahatCommunity.hasRole(VENDOR_ROLE, msg.sender), 'Not a Vendor');
     vendorAllowance[msg.sender] += _amount;
     totalVendorAllocation += _amount;
@@ -162,11 +138,9 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     require(tokenBudget(defaultToken) >= totalVendorAllocation, 'not enough available allocation');
     emit VendorAllowanceAccept(msg.sender, _amount);
   }
- // #Directly transfer allowance to vendor
-  function sendAllowanceToVendor(
-    address _address,
-    uint _amount
-  ) public onlyUnlocked onlyCommunityAdmin {
+
+  // #Directly transfer allowance to vendor
+  function sendAllowanceToVendor(address _address, uint _amount) public onlyCommunityAdmin {
     require(RahatCommunity.hasRole(VENDOR_ROLE, _address), 'Not a Vendor');
     vendorAllowance[_address] += _amount;
     totalVendorAllocation += _amount;
@@ -181,7 +155,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   function requestTokenFromBeneficiary(
     address _benAddress,
     uint _amount
-  ) public onlyLocked returns (uint requestId) {
+  ) public returns (uint requestId) {
     requestId = requestTokenFromBeneficiary(_benAddress, _amount, otpServerAddress);
   }
 
@@ -189,7 +163,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     address _benAddress,
     uint _amount,
     address _otpServerAddress
-  ) public onlyLocked returns (uint requestId) {
+  ) public returns (uint requestId) {
     require(otpServerAddress != address(0), 'invalid otp-server');
     require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
     require(vendorAllowance[_msgSender()] >= _amount, 'not enough vendor allowance');
@@ -204,7 +178,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     tokenRequestIds[_msgSender()][_benAddress] = requestId;
   }
 
-  function processTokenRequest(address _benAddress, string memory _otp) public onlyLocked {
+  function processTokenRequest(address _benAddress, string memory _otp) public {
     IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
       tokenRequestIds[_msgSender()][_benAddress],
       _otp
@@ -222,7 +196,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     address _benAddress,
     address _vendorAddress,
     uint _amount
-  ) public onlyLocked {
+  ) public {
     require(otpServerAddress == msg.sender, 'unauthorized');
     _transferTokenToClaimer(defaultToken, _benAddress, _vendorAddress, _amount);
   }
@@ -232,7 +206,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     address _vendorAddress,
     address _benAddress,
     uint _amount
-    ) public returns(uint requestId){
+  ) public returns (uint requestId) {
     require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
     require(vendorAllowance[_vendorAddress] >= _amount, 'not enough vendor allowance');
 
@@ -246,7 +220,11 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     tokenRequestIds[_vendorAddress][_benAddress] = requestId;
   }
 
-  function processTokenRequestForVendor(address _vendorAddress,address _benAddress, string memory _otp) public {
+  function processTokenRequestForVendor(
+    address _vendorAddress,
+    address _benAddress,
+    string memory _otp
+  ) public {
     IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
       tokenRequestIds[_vendorAddress][_benAddress],
       _otp
@@ -289,34 +267,24 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     return interfaceId == IID_RAHAT_PROJECT;
   }
 
-     ///region overrides
+  ///region overrides
 
-    /// @dev overriding the method to ERC2771Context
-    function _msgSender()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (address sender)
-    {
-        sender = ERC2771Context._msgSender();
-    }
+  /// @dev overriding the method to ERC2771Context
+  function _msgSender() internal view override(Context, ERC2771Context) returns (address sender) {
+    sender = ERC2771Context._msgSender();
+  }
 
-    /// @dev overriding the method to ERC2771Context
-    function _msgData()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (bytes calldata)
-    {
-        return ERC2771Context._msgData();
-    }
+  /// @dev overriding the method to ERC2771Context
+  function _msgData() internal view override(Context, ERC2771Context) returns (bytes calldata) {
+    return ERC2771Context._msgData();
+  }
 
-    function _contextSuffixLength()
-        internal
-        view
-        override(Context, ERC2771Context)
-        returns (uint256)
-    {
-        return ERC2771Context._contextSuffixLength();
-    }
+  function _contextSuffixLength()
+    internal
+    view
+    override(Context, ERC2771Context)
+    returns (uint256)
+  {
+    return ERC2771Context._contextSuffixLength();
+  }
 }

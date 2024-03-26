@@ -6,17 +6,19 @@ import '@openzeppelin/contracts/utils/introspection/IERC165.sol';
 interface IRahatProject is IERC165 {
   function name() external view returns (string memory);
 
-  function isLocked() external view returns (bool);
-
-  function lockProject() external;
-
-  function unlockProject() external;
-
   function community() external view returns (address);
 
-  function addBeneficiary(address _address) external;
+  /**
+   * @dev Adds a beneficiary to the contract.
+   * @param _beneficiary The address of the beneficiary to be added.
+   */
+  function addBeneficiary(address _beneficiary) external;
 
-  function removeBeneficiary(address _address) external;
+  /**
+   * @dev Removes a beneficiary from the contract.
+   * @param _beneficiary The address of the beneficiary to be removed.
+   */
+  function removeBeneficiary(address _beneficiary) external;
 
   function isBeneficiary(address _address) external view returns (bool);
 

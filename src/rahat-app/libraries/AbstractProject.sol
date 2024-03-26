@@ -30,7 +30,6 @@ abstract contract AbstractProject is IRahatProject, Multicall {
   mapping(address => bool) private _registeredTokens;
 
   string public override name;
-  bool public override isLocked;
 
   IRahatCommunity public RahatCommunity;
   EnumerableSet.AddressSet internal _beneficiaries;
@@ -41,34 +40,6 @@ abstract contract AbstractProject is IRahatProject, Multicall {
     name = _name;
     RahatCommunity = IRahatCommunity(_community);
   }
-
-  // #region ***** Modifiers *********//
-  modifier onlyUnlocked() {
-    require(!isLocked, 'project locked');
-    _;
-  }
-
-  modifier onlyLocked() {
-    require(isLocked, 'project unlocked');
-    _;
-  }
-
-  // #endregion
-
-  // #region ***** Project Functions *********//
-  function _lockProject() internal {
-    require(_beneficiaries.length() > 0, 'no beneficiary');
-    isLocked = true;
-    emit ProjectLocked();
-  }
-
-  function _unlockProject() internal {
-    require(!_permaLock, 'locked permanently');
-    isLocked = false;
-    emit ProjectUnlocked();
-  }
-
-  // #endregion
 
   // #region ***** Beneficiary Functions *********//
   function isBeneficiary(address _address) public view virtual returns (bool) {
