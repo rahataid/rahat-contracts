@@ -19,7 +19,7 @@ module.exports = {
   paths: {
     sources: './src/rahat-app',
     tests: './tests',
-    cache: './hardhat_build/cache',
-    artifacts: './hardhat_build/artifacts',
+    cache: './build/cache',
+    artifacts: './build/artifacts',
   },
 };
