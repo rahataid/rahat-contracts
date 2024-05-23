@@ -21,9 +21,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   );
 
   event OtpServerUpdated(address indexed);
-  // #endregion
 
-  // #region ***** Variables *********//
   bytes32 private constant VENDOR_ROLE = keccak256('VENDOR');
   bytes4 public constant IID_RAHAT_PROJECT = type(IRahatProject).interfaceId;
   address public override defaultToken;
@@ -37,16 +35,6 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
 
   mapping(address => mapping(address => uint)) public tokenRequestIds; //vendorAddress=>benAddress=>requestId;
 
-  // #endregion
-
-  // // #region ***** Modifiers *********//
-  // modifier onlyCommunityAdmin() {
-  //   require(RahatCommunity.isAdmin(msg.sender), 'not a community admin');
-  //   _;
-  // }
-
-  // #endregion
-
   constructor(
     string memory _name,
     address _defaultToken,
@@ -58,8 +46,6 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     RahatClaim = IRahatClaim(_rahatClaim);
     otpServerAddress = _otpServerAddress;
   }
-
- 
 
   // #region ***** Beneficiary Function *********//
 
