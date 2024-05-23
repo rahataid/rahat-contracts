@@ -23,11 +23,7 @@ interface ICVAProject is IRahatProject {
   ///@dev Save the no. of tokens issued to track total tokens received
   function acceptToken(address _from, uint _amount) external;
 
-  function withdrawToken(address _token) external;
-
-  function createAllowanceToVendor(address _address, uint256 _amount) external;
-
-  function acceptAllowanceByVendor(uint256 _amount) external;
+  function withdrawToken(address _token,address _withdrawAddress) external;
 
   ///@dev Request For tokens From Beneficay by vendor
   function requestTokenFromBeneficiary(

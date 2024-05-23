@@ -20,8 +20,6 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     uint amount
   );
 
-  event VendorAllowance(address indexed vendor, uint amount);
-  event VendorAllowanceAccept(address indexed vendor, uint amount);
   event OtpServerUpdated(address indexed);
   // #endregion
 
@@ -37,19 +35,15 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
 
   mapping(address => uint) public override beneficiaryClaims; //benAddress=>amount;
 
-  uint public totalVendorAllocation;
-  mapping(address => uint) public vendorAllowance;
-  mapping(address => uint) public vendorAllowancePending;
-
   mapping(address => mapping(address => uint)) public tokenRequestIds; //vendorAddress=>benAddress=>requestId;
 
   // #endregion
 
-  // #region ***** Modifiers *********//
-  modifier onlyCommunityAdmin() {
-    require(RahatCommunity.isAdmin(msg.sender), 'not a community admin');
-    _;
-  }
+  // // #region ***** Modifiers *********//
+  // modifier onlyCommunityAdmin() {
+  //   require(RahatCommunity.isAdmin(msg.sender), 'not a community admin');
+  //   _;
+  // }
 
   // #endregion
 
@@ -58,51 +52,30 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     address _defaultToken,
     address _rahatClaim,
     address _otpServerAddress,
-    address _community,
     address _forwarder
-  ) AbstractProject(_name, _community) ERC2771Context(address(_forwarder)) {
+  ) AbstractProject(_name) ERC2771Context(address(_forwarder)) {
     defaultToken = _defaultToken;
     RahatClaim = IRahatClaim(_rahatClaim);
     otpServerAddress = _otpServerAddress;
-    RahatCommunity.requestProjectApproval(address(this));
   }
 
-  // #region ***** Project Functions *********//
-  function lockProject() public onlyUnlocked {
-    require(isDonor[msg.sender], 'not a donor');
-    require(tokenBudget(defaultToken) > 0, 'no tokens');
-    _lockProject();
-  }
-
-  function lockProjectPermanently() public onlyUnlocked {
-    require(isDonor[msg.sender], 'not a donor');
-    require(tokenBudget(defaultToken) > 0, 'no tokens');
-    if (!_permaLock) _permaLock = true;
-    _lockProject();
-  }
-
-  function unlockProject() public onlyLocked {
-    require(isDonor[msg.sender], 'not a donor');
-    _unlockProject();
-  }
-
-  // #endregion
+ 
 
   // #region ***** Beneficiary Function *********//
 
-  function addBeneficiary(address _address) public onlyUnlocked onlyCommunityAdmin {
+  function addBeneficiary(address _address) public  {
     _addBeneficiary(_address);
   }
 
   function assignClaims(
     address _address,
     uint _claimAmount
-  ) public onlyUnlocked onlyCommunityAdmin {
+  ) public{
     _addBeneficiary(_address);
     _assignClaims(_address, _claimAmount);
   }
 
-  function removeBeneficiary(address _address) public onlyUnlocked onlyCommunityAdmin {
+  function removeBeneficiary(address _address) public  {
     _removeBeneficiary(_address);
     _assignClaims(_address, 0);
   }
@@ -130,58 +103,21 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   // #endregion
 
   // #region ***** Token Functions *********//
-  function acceptToken(address _from, uint256 _amount) public onlyUnlocked onlyCommunityAdmin {
+  function acceptToken(address _from, uint256 _amount) public  {
     isDonor[_from] = true;
     _acceptToken(defaultToken, _from, _amount);
   }
 
-  function withdrawToken(address _token) public onlyLocked onlyCommunityAdmin {
+  function withdrawToken(address _token,address _withdrawAddress) public  {
     uint _surplus = IERC20(_token).balanceOf(address(this));
-    _withdrawToken(_token, _surplus);
+    _withdrawToken(_token, _surplus,_withdrawAddress);
   }
-
-  // #endregion
-
-  // #region ***** Vendor Allowance *********//
-  function createAllowanceToVendor(
-    address _address,
-    uint256 _amount
-  ) public onlyUnlocked onlyCommunityAdmin {
-    require(RahatCommunity.hasRole(VENDOR_ROLE, _address), 'Not a Vendor');
-    require(tokenBudget(defaultToken) >= _amount, 'not enough balance');
-    vendorAllowancePending[_address] = _amount;
-    emit VendorAllowance(_address, _amount);
-  }
-
-  function acceptAllowanceByVendor(uint256 _amount) public onlyUnlocked {
-    require(RahatCommunity.hasRole(VENDOR_ROLE, msg.sender), 'Not a Vendor');
-    vendorAllowance[msg.sender] += _amount;
-    totalVendorAllocation += _amount;
-    vendorAllowancePending[msg.sender] -= _amount;
-
-    require(tokenBudget(defaultToken) >= totalVendorAllocation, 'not enough available allocation');
-    emit VendorAllowanceAccept(msg.sender, _amount);
-  }
- // #Directly transfer allowance to vendor
-  function sendAllowanceToVendor(
-    address _address,
-    uint _amount
-  ) public onlyUnlocked onlyCommunityAdmin {
-    require(RahatCommunity.hasRole(VENDOR_ROLE, _address), 'Not a Vendor');
-    vendorAllowance[_address] += _amount;
-    totalVendorAllocation += _amount;
-    require(tokenBudget(defaultToken) >= totalVendorAllocation, 'not enough available allocation');
-    emit VendorAllowance(_address, _amount);
-    emit VendorAllowanceAccept(msg.sender, _amount);
-  }
-
-  // #endregion
 
   // #region ***** Claim Process *********//
   function requestTokenFromBeneficiary(
     address _benAddress,
     uint _amount
-  ) public onlyLocked returns (uint requestId) {
+  ) public returns (uint requestId) {
     requestId = requestTokenFromBeneficiary(_benAddress, _amount, otpServerAddress);
   }
 
@@ -189,10 +125,9 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     address _benAddress,
     uint _amount,
     address _otpServerAddress
-  ) public onlyLocked returns (uint requestId) {
+  ) public returns (uint requestId) {
     require(otpServerAddress != address(0), 'invalid otp-server');
     require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
-    require(vendorAllowance[_msgSender()] >= _amount, 'not enough vendor allowance');
 
     requestId = RahatClaim.createClaim(
       _msgSender(),
@@ -204,7 +139,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     tokenRequestIds[_msgSender()][_benAddress] = requestId;
   }
 
-  function processTokenRequest(address _benAddress, string memory _otp) public onlyLocked {
+  function processTokenRequest(address _benAddress, string memory _otp) public {
     IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
       tokenRequestIds[_msgSender()][_benAddress],
       _otp
@@ -222,41 +157,9 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
     address _benAddress,
     address _vendorAddress,
     uint _amount
-  ) public onlyLocked {
+  ) public  {
     require(otpServerAddress == msg.sender, 'unauthorized');
     _transferTokenToClaimer(defaultToken, _benAddress, _vendorAddress, _amount);
-  }
-
-  //Patchwork for vendor transaction
-  function initiateTokenRequestForVendor(
-    address _vendorAddress,
-    address _benAddress,
-    uint _amount
-    ) public returns(uint requestId){
-    require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balance');
-    require(vendorAllowance[_vendorAddress] >= _amount, 'not enough vendor allowance');
-
-    requestId = RahatClaim.createClaim(
-      _vendorAddress,
-      _benAddress,
-      otpServerAddress,
-      defaultToken,
-      _amount
-    );
-    tokenRequestIds[_vendorAddress][_benAddress] = requestId;
-  }
-
-  function processTokenRequestForVendor(address _vendorAddress,address _benAddress, string memory _otp) public {
-    IRahatClaim.Claim memory _claim = RahatClaim.processClaim(
-      tokenRequestIds[_vendorAddress][_benAddress],
-      _otp
-    );
-    _transferTokenToClaimer(
-      _claim.tokenAddress,
-      _claim.claimeeAddress,
-      _claim.claimerAddress,
-      _claim.amount
-    );
   }
 
   function _transferTokenToClaimer(
@@ -267,7 +170,6 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   ) private {
     require(beneficiaryClaims[_benAddress] >= _amount, 'not enough balace');
     beneficiaryClaims[_benAddress] -= _amount;
-    vendorAllowance[_vendorAddress] -= _amount;
     require(IERC20(_tokenAddress).transfer(_vendorAddress, _amount), 'transfer failed');
     emit ClaimProcessed(_benAddress, _vendorAddress, _tokenAddress, _amount);
   }
@@ -275,7 +177,7 @@ contract CVAProject is AbstractProject, ICVAProject, ERC2771Context {
   // #endregion
 
   // #region ***** Housekeeping *********//
-  function updateOtpServer(address _address) public onlyCommunityAdmin {
+  function updateOtpServer(address _address) public {
     require(_address != address(0), 'invalid address');
     require(_address != address(this), 'cannot be contract address');
     require(_address != address(otpServerAddress), 'no change');

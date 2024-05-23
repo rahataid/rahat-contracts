@@ -16,6 +16,12 @@ module.exports = {
       },
     },
   },
+
+  networks: {
+    hardhat: {
+     
+    }
+  },
   paths: {
     sources: './src/rahat-app',
     tests: './tests',
